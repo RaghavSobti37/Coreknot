@@ -87,6 +87,87 @@ describe('artistCrmImport bulk helpers', () => {
   });
 });
 
+describe('artistCrmMappedImport file parsing', () => {
+  const fs = require('fs');
+  const os = require('os');
+  const path = require('path');
+  const xlsx = require('xlsx');
+  const {
+    mapRowWithColumnMapping,
+    readImportRows,
+  } = require('../domains/crm/services/artistCrmMappedImportService');
+
+  test('reads xlsx files with the same row shape as csv imports', async () => {
+    const filePath = path.join(os.tmpdir(), `artist-import-${Date.now()}.xlsx`);
+    const wb = xlsx.utils.book_new();
+    const ws = xlsx.utils.json_to_sheet([
+      {
+        Name: 'singersaddalive',
+        Location: 'delhi',
+        Status: 'call done required then call',
+        'Contact Info': '9024602555 / singersaddainsta@gmail.com',
+      },
+    ]);
+    xlsx.utils.book_append_sheet(wb, ws, 'Sheet1');
+    xlsx.writeFile(wb, filePath);
+
+    try {
+      const parsed = await readImportRows(filePath, 'evet sheet new  (1).xlsx');
+      expect(parsed.headers).toEqual(['Name', 'Location', 'Status', 'Contact Info']);
+      expect(parsed.rows).toHaveLength(1);
+      expect(parsed.rows[0]['Contact Info']).toContain('9024602555');
+    } finally {
+      fs.unlinkSync(filePath);
+    }
+  });
+
+  test('keeps artist rows with name only so synthetic identity can be applied', () => {
+    const mapped = mapRowWithColumnMapping(
+      { Name: 'No Contact Event', Status: 'call later' },
+      { name: 'Name', remarks: 'Status' },
+      2,
+      'events.xlsx'
+    );
+
+    expect(mapped).toMatchObject({
+      name: 'No Contact Event',
+      remarks: 'call later',
+      crmType: 'artist',
+    });
+  });
+
+  test('parses phone and email from a single contact info column', () => {
+    const mapped = mapRowWithColumnMapping(
+      {
+        Name: 'singersaddalive',
+        'Contact Info': '9024602555 / singersaddainsta@gmail.com',
+      },
+      { name: 'Name', phone: 'Contact Info' },
+      2,
+      'events.xlsx'
+    );
+
+    expect(mapped.phone).toMatch(/^\+91/);
+    expect(mapped.email).toBe('singersaddainsta@gmail.com');
+  });
+
+  test('derives a fallback name from contact info when name cell is blank', () => {
+    const mapped = mapRowWithColumnMapping(
+      {
+        Name: '',
+        Status: 'call not receive',
+        'Contact Info': 'delhi 9643661345',
+      },
+      { name: 'Name', phone: 'Contact Info', remarks: 'Status' },
+      2,
+      'events.xlsx'
+    );
+
+    expect(mapped.name).toBe('delhi 9643661345');
+    expect(mapped.phone).toMatch(/^\+91/);
+  });
+});
+
 describe('artistCrmSheetMappings', () => {
   test('detects YUGM media template', () => {
     const t = detectSheetTemplate('YUGM __ TSC Artist Mastersheet - Media List.csv');

@@ -20,8 +20,8 @@ describe('artistCrmImportFields', () => {
     expect(mapping.primaryRole).toBe('Designation');
   });
 
-  test('validateArtistCrmMapping requires name and contact', () => {
-    expect(validateArtistCrmMapping({ name: 'Name' })).toMatch(/Phone or Email/);
+  test('validateArtistCrmMapping requires name', () => {
+    expect(validateArtistCrmMapping({ name: 'Name' })).toBeNull();
     expect(validateArtistCrmMapping({ phone: 'Phone' })).toMatch(/Name/);
     expect(validateArtistCrmMapping({ name: 'Name', email: 'Email' })).toBeNull();
   });

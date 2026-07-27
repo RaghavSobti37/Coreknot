@@ -11,17 +11,23 @@ const Lead = require('./models/Lead');
 
 const multer = require('multer');
 const path = require('path');
-const upload = multer({
-  dest: 'uploads/',
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (ext !== '.csv') {
-      return cb(new Error('Only CSV files are allowed'), false);
-    }
-    cb(null, true);
-  },
-});
+
+function makeUpload(allowedExtensions, errorMessage) {
+  return multer({
+    dest: 'uploads/',
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (!allowedExtensions.includes(ext)) {
+        return cb(new Error(errorMessage), false);
+      }
+      cb(null, true);
+    },
+  });
+}
+
+const upload = makeUpload(['.csv'], 'Only CSV files are allowed');
+const artistUpload = makeUpload(['.csv', '.xlsx', '.xls'], 'Only CSV or Excel files are allowed');
 
 function requireCrmAccess(req, res, next) {
   const user = req.user;
@@ -54,8 +60,8 @@ const artistCrmController = require('./controllers/artistCrmController');
 router.get('/artist/templates', artistCrmController.requireArtistCrmAccess, artistCrmController.getArtistTemplates);
 router.get('/artist/assignees', artistCrmController.requireArtistCrmAccess, artistCrmController.getArtistCallAssignees);
 router.get('/artist/import-sheets', requireCrmAccess, artistCrmController.getArtistImportSheets);
-router.post('/artist/preview', artistCrmController.requireArtistCrmAccess, upload.single('file'), artistCrmController.previewArtistCsv);
-router.post('/artist/upload', artistCrmController.requireArtistCrmAccess, upload.single('file'), artistCrmController.uploadArtistCsv);
+router.post('/artist/preview', artistCrmController.requireArtistCrmAccess, artistUpload.single('file'), artistCrmController.previewArtistCsv);
+router.post('/artist/upload', artistCrmController.requireArtistCrmAccess, artistUpload.single('file'), artistCrmController.uploadArtistCsv);
 router.post('/artist/import', admin, artistCrmController.importArtistFromPath);
 
 router.delete('/leads/cleanup-test-data', admin, crmController.cleanupTestData);

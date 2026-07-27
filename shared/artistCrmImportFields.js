@@ -17,7 +17,7 @@ const HEADER_ALIASES = {
   email: ['email', 'email id', 'email address', 'contact email'],
   city: ['city', 'location', 'city / region', 'location (city / district)'],
   primaryRole: ['role', 'designation', 'primary role', 'contact person / role'],
-  remarks: ['remarks', 'notes', 'comments'],
+  remarks: ['remarks', 'notes', 'comments', 'status'],
   source: ['source', 'category'],
   tags: ['tags', 'tag'],
 };
@@ -43,9 +43,6 @@ function suggestArtistCrmMapping(headers = []) {
 function validateArtistCrmMapping(mapping = {}) {
   if (!mapping.name) {
     return 'Name column mapping is required.';
-  }
-  if (!mapping.phone && !mapping.email) {
-    return 'Map at least Phone or Email.';
   }
   return null;
 }

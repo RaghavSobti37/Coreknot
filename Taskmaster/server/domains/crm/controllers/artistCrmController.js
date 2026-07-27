@@ -26,6 +26,10 @@ function parseMappingBody(raw) {
   }
 }
 
+function stripImportExtension(filename) {
+  return String(filename || '').replace(/\.(csv|xlsx|xls)$/i, '');
+}
+
 exports.getArtistTemplates = (req, res) => {
   res.json({
     templates: listSheetTemplates(),
@@ -50,7 +54,7 @@ exports.getArtistImportSheets = (req, res) => {
 exports.previewArtistCsv = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    const sheetName = req.body?.sheetName || req.file.originalname.replace(/\.csv$/i, '');
+    const sheetName = req.body?.sheetName || stripImportExtension(req.file.originalname);
     const preview = await previewArtistCsvFile(req.file.path, req.file.originalname, { sheetName });
     fs.unlink(req.file.path, () => {});
     res.json(preview);
@@ -67,7 +71,7 @@ exports.uploadArtistCsv = async (req, res) => {
 
     const mapping = parseMappingBody(req.body?.mapping);
     const assignedRepId = req.body?.assignedRepId;
-    const sheetName = req.body?.sheetName || req.file.originalname.replace(/\.csv$/i, '');
+    const sheetName = req.body?.sheetName || stripImportExtension(req.file.originalname);
     const useSheetAssignee = req.body?.useSheetAssignee !== 'false';
 
     const result = await importArtistCsvWithOptions({

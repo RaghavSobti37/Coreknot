@@ -7,6 +7,11 @@ import { useToast } from '../../contexts/ToastContext';
 import { useQueryClient } from '@tanstack/react-query';
 
 const CRM_FIELD_SELECT = 'w-full px-3 py-2 bg-[var(--color-bg-primary)] border border-[var(--color-bg-border)] rounded-xl text-xs font-bold outline-none focus:border-[var(--color-action-primary)]';
+const ACCEPTED_IMPORT_FILES = '.csv,.xlsx,.xls';
+
+function stripImportExtension(filename) {
+  return String(filename || '').replace(/\.(csv|xlsx|xls)$/i, '');
+}
 
 export default function ArtistCrmImportPanel({ compact = false }) {
   const toast = useToast();
@@ -57,7 +62,7 @@ export default function ArtistCrmImportPanel({ compact = false }) {
       }
       setStep('map');
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Could not read CSV');
+      toast.error(err.response?.data?.error || 'Could not read import file');
       setFile(null);
     } finally {
       setLoading(false);
@@ -71,10 +76,6 @@ export default function ArtistCrmImportPanel({ compact = false }) {
       toast.error('Map the Name column before importing.');
       return;
     }
-    if (!mapping.phone && !mapping.email) {
-      toast.error('Map at least Phone or Email.');
-      return;
-    }
     if (!assignedRepId) {
       toast.error('Choose who to assign leads to.');
       return;
@@ -85,7 +86,7 @@ export default function ArtistCrmImportPanel({ compact = false }) {
     formData.append('file', file);
     formData.append('mapping', JSON.stringify(mapping));
     formData.append('assignedRepId', assignedRepId);
-    formData.append('sheetName', preview.sheetName || file.name.replace(/\.csv$/i, ''));
+    formData.append('sheetName', preview.sheetName || stripImportExtension(file.name));
     formData.append('useSheetAssignee', assigneeFromSheet ? 'true' : 'false');
     try {
       const { data } = await axios.post('/api/crm/artist/upload', formData);
@@ -170,7 +171,7 @@ export default function ArtistCrmImportPanel({ compact = false }) {
 
       <Button
         onClick={runImport}
-        disabled={importing || !mapping.name || (!mapping.phone && !mapping.email) || !assignedRepId}
+        disabled={importing || !mapping.name || !assignedRepId}
         className="w-full"
         variant="primary"
       >
@@ -184,17 +185,17 @@ export default function ArtistCrmImportPanel({ compact = false }) {
     return (
       <>
         <label className="inline-flex cursor-pointer">
-          <input type="file" accept=".csv" className="hidden" onChange={handleFilePick} disabled={loading} />
+          <input type="file" accept={ACCEPTED_IMPORT_FILES} className="hidden" onChange={handleFilePick} disabled={loading} />
           <span className="inline-flex">
             <Button size="sm" variant="secondary" type="button" disabled={loading} className="pointer-events-none">
-              <Upload size={14} /> {loading ? 'Reading…' : 'Import CSV'}
+              <Upload size={14} /> {loading ? 'Reading…' : 'Import File'}
             </Button>
           </span>
         </label>
         <Modal
           isOpen={step === 'map' && !!preview}
           onClose={reset}
-          title="Import CSV"
+          title="Import Leads"
           showFooter={false}
           size="xl"
         >
@@ -210,7 +211,7 @@ export default function ArtistCrmImportPanel({ compact = false }) {
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Artist CRM Import</p>
           <p className="text-[11px] text-[var(--color-text-muted)] mt-1 max-w-xl">
-            Upload any CSV. If filename/sheet ends with <code className="font-mono text-[10px]">- Akash</code> (or Rohith, Atharva, Harshika…), leads auto-assign to that rep.
+            Upload CSV or Excel. If filename/sheet ends with <code className="font-mono text-[10px]">- Akash</code> (or Rohith, Atharva, Harshika…), leads auto-assign to that rep.
             Existing leads are skipped — nothing overwritten. Academy (sales) pipeline untouched.
           </p>
         </div>
@@ -222,9 +223,9 @@ export default function ArtistCrmImportPanel({ compact = false }) {
       {step === 'upload' && (
         <label className="w-full cursor-pointer flex flex-col items-center justify-center p-8 bg-[var(--color-bg-secondary)] border-2 border-dashed border-[var(--color-bg-border)] rounded-xl hover:border-[var(--color-action-primary)] transition-all">
           <Upload size={28} className="text-[var(--color-text-muted)] mb-2" />
-          <span className="text-xs font-bold uppercase tracking-wider">Select CSV to import</span>
-          <span className="text-[10px] text-[var(--color-text-muted)] mt-1">Name file like <span className="font-mono">Leads - Akash.csv</span> to auto-assign</span>
-          <input type="file" accept=".csv" className="hidden" onChange={handleFilePick} disabled={loading} />
+          <span className="text-xs font-bold uppercase tracking-wider">Select file to import</span>
+          <span className="text-[10px] text-[var(--color-text-muted)] mt-1">Name file like <span className="font-mono">Leads - Akash.xlsx</span> to auto-assign</span>
+          <input type="file" accept={ACCEPTED_IMPORT_FILES} className="hidden" onChange={handleFilePick} disabled={loading} />
           {loading && <span className="text-[10px] mt-2 text-[var(--color-action-primary)]">Reading file…</span>}
         </label>
       )}

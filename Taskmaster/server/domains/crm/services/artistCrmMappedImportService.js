@@ -1,5 +1,6 @@
 const fs = require('fs');
 const csv = require('csv-parser');
+const xlsx = require('xlsx');
 const Lead = require('../models/Lead');
 const CRMImport = require('../models/CRMImport');
 const { CRM_TYPES, CONTACT_CATEGORIES, IMPORT_TAGS } = require('../../../../shared/artistCrmTaxonomy');
@@ -23,6 +24,15 @@ const TENANT_LOOKUP = bypassOptions('artist_crm_mapped_import');
 const BULK_INSERT_CHUNK = 500;
 const PREVIEW_ROW_LIMIT = 5;
 
+function cleanWorkbookRows(rows) {
+  return rows.map((row) => Object.fromEntries(
+    Object.entries(row).filter(([key, value]) => {
+      if (/^__EMPTY/.test(key)) return false;
+      return value != null && String(value).trim() !== '';
+    })
+  ));
+}
+
 function readCsvRows(filePath) {
   return new Promise((resolve, reject) => {
     const rows = [];
@@ -34,6 +44,27 @@ function readCsvRows(filePath) {
       .on('end', () => resolve({ headers, rows }))
       .on('error', reject);
   });
+}
+
+async function readXlsxRows(filePath) {
+  const workbook = xlsx.readFile(filePath, { cellDates: true });
+  const firstSheetName = workbook.SheetNames[0];
+  if (!firstSheetName) return { headers: [], rows: [] };
+
+  const worksheet = workbook.Sheets[firstSheetName];
+  const rows = cleanWorkbookRows(xlsx.utils.sheet_to_json(worksheet, {
+    defval: '',
+    raw: false,
+    blankrows: false,
+  }));
+  const headers = rows[0] ? Object.keys(rows[0]) : [];
+  return { headers, rows };
+}
+
+function readImportRows(filePath, filename = filePath) {
+  const ext = String(filename || filePath).toLowerCase();
+  if (ext.endsWith('.xlsx') || ext.endsWith('.xls')) return readXlsxRows(filePath);
+  return readCsvRows(filePath);
 }
 
 function buildImportRowKey(filename, rowIndex) {
@@ -57,12 +88,11 @@ function mapRowWithColumnMapping(row, mapping, rowIndex, filename) {
   const sharedContact = emailCol && phoneCol && emailCol === phoneCol;
   const contactRaw = sharedContact ? pick('email') : `${pick('phone')} ${pick('email')}`.trim();
   const parsed = parseContactField(contactRaw);
-  if (!email && parsed.email) email = parsed.email;
-  if (!phone && parsed.phone) phone = parsed.phone;
-  if (sharedContact && parsed.phone) phone = parsed.phone;
-  if (sharedContact && parsed.email) email = parsed.email;
+  if (parsed.email) email = parsed.email;
+  if (parsed.phone) phone = parsed.phone;
+  if (!name) name = contactRaw || email || phone;
 
-  if (!name || (!email && !phone)) return null;
+  if (!name) return null;
 
   const tagsRaw = pick('tags');
   const tags = tagsRaw
@@ -87,6 +117,7 @@ function mapRowWithColumnMapping(row, mapping, rowIndex, filename) {
       importRowKey: buildImportRowKey(filename, rowIndex),
       mappedImport: true,
       sourceFile: filename,
+      rawContact: contactRaw,
     },
   };
 }
@@ -167,7 +198,7 @@ async function bulkInsertNewLeads(docs) {
 }
 
 async function previewArtistCsvFile(filePath, filename, { sheetName } = {}) {
-  const { headers, rows } = await readCsvRows(filePath);
+  const { headers, rows } = await readImportRows(filePath, filename);
   const template = detectSheetTemplate(filename);
   const label = sheetName || filename.replace(/\.csv$/i, '');
   const assignees = await listArtistCallAssignees();
@@ -221,7 +252,7 @@ async function importArtistCsvWithOptions({
 
   const tenantId = await resolveTenantId();
   const registry = await loadExistingIdentityRegistry(tenantId);
-  const { rows } = await readCsvRows(filePath);
+  const { rows } = await readImportRows(filePath, filename);
 
   const importSession = await CRMImport.create({
     filename,
@@ -310,6 +341,7 @@ module.exports = {
   previewArtistCsvFile,
   importArtistCsvWithOptions,
   mapRowWithColumnMapping,
+  readImportRows,
   suggestArtistCrmMapping,
   validateArtistCrmMapping,
 };

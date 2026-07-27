@@ -122,6 +122,7 @@
     "tesseract.js": "^7.0.0",
     "uploadthing": "^7.7.4",
     "web-push": "^3.6.7",
+    "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
