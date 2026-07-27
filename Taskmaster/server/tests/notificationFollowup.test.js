@@ -59,7 +59,45 @@ describe('checkFollowups query filters', () => {
 
     expect(Lead.find).toHaveBeenCalledWith(expect.objectContaining({
       leadStatus: { $ne: 'Converted' },
-      reminderSent: false,
+      $or: expect.arrayContaining([
+        { reminderSent: false },
+        { reminderSent: { $exists: false } },
+        { reminderSent: null },
+      ]),
     }));
+  });
+
+  test('due followup scan sends reminders for CRM yyyy-mm-dd date values', async () => {
+    const { checkFollowups } = require('../services/notificationService');
+    const { getISTDate } = require('../utils/attendanceDate');
+    const now = getISTDate();
+    const dateKey = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, '0'),
+      String(now.getDate()).padStart(2, '0'),
+    ].join('-');
+    const timeKey = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const lead = {
+      _id: 'lead-1',
+      name: 'Asha',
+      nextFollowupDate: dateKey,
+      nextFollowupTime: timeKey,
+      assignedRepId: { _id: 'rep-1' },
+      save: jest.fn().mockResolvedValue(undefined),
+    };
+
+    Lead.find
+      .mockReturnValueOnce({ populate: jest.fn().mockResolvedValue([lead]) })
+      .mockReturnValueOnce({ populate: jest.fn().mockResolvedValue([]) });
+
+    await checkFollowups();
+
+    expect(createNotification).toHaveBeenCalledWith(expect.objectContaining({
+      recipientId: 'rep-1',
+      title: 'Follow-up due: Asha',
+      relatedLeadId: 'lead-1',
+    }));
+    expect(lead.reminderSent).toBe(true);
+    expect(lead.save).toHaveBeenCalled();
   });
 });

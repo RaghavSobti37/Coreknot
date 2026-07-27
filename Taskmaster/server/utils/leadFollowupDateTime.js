@@ -5,15 +5,22 @@ function parseLeadFollowupDateTime(lead) {
   if (!dateStr) return null;
 
   const timeStr = String(lead?.nextFollowupTime || '').trim();
+  const dateFormats = ['yyyy-MM-dd', 'dd/MM/yyyy'];
+
   if (timeStr) {
-    const with24h = parse(`${dateStr} ${timeStr}`, 'dd/MM/yyyy HH:mm', new Date());
-    if (!Number.isNaN(with24h.getTime())) return with24h;
-    const with12h = parse(`${dateStr} ${timeStr}`, 'dd/MM/yyyy h:mm a', new Date());
-    if (!Number.isNaN(with12h.getTime())) return with12h;
+    for (const dateFormat of dateFormats) {
+      const with24h = parse(`${dateStr} ${timeStr}`, `${dateFormat} HH:mm`, new Date());
+      if (!Number.isNaN(with24h.getTime())) return with24h;
+      const with12h = parse(`${dateStr} ${timeStr}`, `${dateFormat} h:mm a`, new Date());
+      if (!Number.isNaN(with12h.getTime())) return with12h;
+    }
   }
 
-  const dateOnly = parse(dateStr, 'dd/MM/yyyy', new Date());
-  return Number.isNaN(dateOnly.getTime()) ? null : dateOnly;
+  for (const dateFormat of dateFormats) {
+    const dateOnly = parse(dateStr, dateFormat, new Date());
+    if (!Number.isNaN(dateOnly.getTime())) return dateOnly;
+  }
+  return null;
 }
 
 function formatFollowupScheduleLabel(lead) {

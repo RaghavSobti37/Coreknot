@@ -17,27 +17,30 @@ describe('crmScope', () => {
     departmentId: { slug: 'admin', permissionPreset: 'admin' },
   };
 
-  it('artist-management sees all artist CRM leads', () => {
+  it('artist-management sees only assigned artist CRM leads', () => {
     expect(resolveCrmScope(artistUser)).toEqual({
       crmType: CRM_TYPES.ARTIST,
-      restrictToOwn: false,
+      restrictToOwn: true,
     });
 
     const query = {};
     applyCrmScopeToQuery(query, artistUser);
-    expect(query).toEqual({ crmType: CRM_TYPES.ARTIST });
-    expect(query.assignedRepId).toBeUndefined();
+    expect(query).toEqual({
+      crmType: CRM_TYPES.ARTIST,
+      assignedRepId: expect.any(Object),
+    });
+    expect(String(query.assignedRepId)).toBe(artistUser._id);
   });
 
-  it('sales reps browse shared sales pipeline without rep lock', () => {
+  it('sales reps see only assigned sales pipeline leads', () => {
     expect(resolveCrmScope(salesUser)).toEqual({
       crmType: CRM_TYPES.SALES,
-      restrictToOwn: false,
+      restrictToOwn: true,
     });
 
     const query = {};
     applyCrmScopeToQuery(query, salesUser);
-    expect(query.assignedRepId).toBeUndefined();
+    expect(String(query.assignedRepId)).toBe(salesUser._id);
     expect(query.$and).toEqual([{
       $or: [
         { crmType: CRM_TYPES.SALES },

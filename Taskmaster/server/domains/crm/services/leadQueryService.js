@@ -42,6 +42,7 @@ const LEAD_LIST_PROJECTION = {
 function buildLeadListQuery(user, queryParams) {
   const query = {};
   applyCrmScopeToQuery(query, user, queryParams);
+  const scopedAssignedRepId = query.assignedRepId;
 
   if (queryParams.search) {
     const escaped = escapeRegExp(queryParams.search);
@@ -84,7 +85,7 @@ function buildLeadListQuery(user, queryParams) {
     query.meaningfulConnect = queryParams.meaningfulConnect;
   }
 
-  if (queryParams.assignedRepId && queryParams.assignedRepId !== 'all') {
+  if (!scopedAssignedRepId && queryParams.assignedRepId && queryParams.assignedRepId !== 'all') {
     if (queryParams.assignedRepId === 'unassigned' || queryParams.assignedRepId === 'null') {
       query.assignedRepId = null;
     } else if (mongoose.Types.ObjectId.isValid(queryParams.assignedRepId)) {

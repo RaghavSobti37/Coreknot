@@ -17,6 +17,7 @@ const {
 const { normalizePersonRecord, applyPersonIdentityToDoc } = require('../../../utils/personNormalization');
 const { assignLeadToArtistRep } = require('../../../utils/crmAssignment');
 const { resolveAssigneeForImport } = require('../../../utils/artistCallAssignees');
+const { resolveDefaultTenantId } = require('../../../utils/defaultTenant');
 const logger = require('../../../utils/logger');
 
 const ARTIST_SLUG = 'artist-management';
@@ -360,14 +361,7 @@ function resolveImportDocUniqueness(doc, registry) {
 }
 
 async function loadBulkImportRegistry() {
-  const Tenant = require('../../../models/Tenant');
-  let tenant = await Tenant.findOne({ name: 'Default Tenant' }).setOptions({ bypassTenant: true });
-  if (!tenant) {
-    tenant = await Tenant.create({
-      name: 'Default Tenant',
-      contactEmail: 'helloworld@theshakticollective',
-    });
-  }
+  const tenantId = await resolveDefaultTenantId();
 
   const artistDept = await Department.findOne({ slug: ARTIST_SLUG }).setOptions({ bypassTenant: true });
   const reps = artistDept
@@ -375,7 +369,7 @@ async function loadBulkImportRegistry() {
     : [];
   const defaultAssigneeId = await assignLeadToArtistRep();
 
-  const existing = await Lead.find({ crmType: CRM_TYPES.ARTIST })
+  const existing = await Lead.find({ tenantId, crmType: CRM_TYPES.ARTIST })
     .select('metadata.importRowKey phone email')
     .setOptions({ bypassTenant: true })
     .lean();
@@ -400,7 +394,7 @@ async function loadBulkImportRegistry() {
   }
 
   return {
-    tenantId: tenant._id,
+    tenantId,
     reps,
     defaultAssigneeId,
     phones,
@@ -468,6 +462,7 @@ async function executeBulkLeadUpsert(docs) {
 async function bulkImportArtistCsvFiles({ files, userId, skipContacts = true }) {
   const registry = await loadBulkImportRegistry();
   const importSession = await CRMImport.create({
+    tenantId: registry.tenantId,
     filename: files.map((f) => f.filename).join('; '),
     leadCount: 0,
     crmType: CRM_TYPES.ARTIST,
@@ -703,6 +698,7 @@ async function importArtistCsvFile({ filePath, filename, userId, assignedRepId: 
     : [];
 
   const importSession = await CRMImport.create({
+    tenantId: await resolveDefaultTenantId(),
     filename,
     leadCount: 0,
     crmType: CRM_TYPES.ARTIST,

@@ -29,36 +29,34 @@ function resolveCrmScope(user, queryCrmType) {
 
   const slug = getDepartmentSlug(user);
   if (slug === ARTIST_SLUG) {
-    // Whole artist-management team shares one pipeline; assignment stays on primary rep.
-    return { crmType: CRM_TYPES.ARTIST, restrictToOwn: false };
+    return { crmType: CRM_TYPES.ARTIST, restrictToOwn: true };
   }
   if (slug === SALES_SLUG) {
-    // Whole sales team shares one pipeline; toolbar filters (incl. Agent) apply team-wide.
-    return { crmType: CRM_TYPES.SALES, restrictToOwn: false };
+    return { crmType: CRM_TYPES.SALES, restrictToOwn: true };
   }
 
   // Custom page permissions: infer from explicit query if CRM access granted
   const requested = queryCrmType === CRM_TYPES.ARTIST || queryCrmType === CRM_TYPES.SALES
     ? queryCrmType
     : CRM_TYPES.SALES;
-  return { crmType: requested, restrictToOwn: false };
+  return { crmType: requested, restrictToOwn: true };
 }
 
 /**
- * Sales/custom CRM users may only mutate leads assigned to them; list/stats stay team-wide.
+ * CRM users may only mutate leads assigned to them unless they are admins.
  */
 function shouldRestrictCrmMutationsToOwn(user) {
   if (isAdminUser(user)) return false;
   const slug = getDepartmentSlug(user);
-  if (slug === ARTIST_SLUG) return false;
+  if (slug === ARTIST_SLUG) return true;
   if (slug === SALES_SLUG) return true;
   return true;
 }
 
 /** Apply crmType + optional rep scoping to a Mongo query object. */
 function applyCrmScopeToQuery(query, user, reqQuery = {}, options = {}) {
-  const { crmType } = resolveCrmScope(user, reqQuery.crmType);
-  const restrictToOwnLeads = options.restrictToOwnLeads === true;
+  const { crmType, restrictToOwn } = resolveCrmScope(user, reqQuery.crmType);
+  const restrictToOwnLeads = options.restrictToOwnLeads ?? restrictToOwn;
 
   if (crmType === CRM_TYPES.SALES) {
     applySalesCrmTypeFilter(query);

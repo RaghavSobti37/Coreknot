@@ -72,7 +72,11 @@ const checkFollowups = async () => {
       leadStatus: { $ne: 'Converted' },
       nextFollowupDate: { $exists: true, $ne: '' },
       nextFollowupTime: { $exists: true, $ne: '' },
-      reminderSent: false,
+      $or: [
+        { reminderSent: false },
+        { reminderSent: { $exists: false } },
+        { reminderSent: null },
+      ],
     }).populate('assignedRepId');
 
     for (const lead of leads) {
@@ -111,7 +115,11 @@ async function checkOverdueFollowups(now = getISTDate()) {
   const leads = await Lead.find({
     leadStatus: { $ne: 'Converted' },
     nextFollowupDate: { $exists: true, $ne: '' },
-    notifiedOverdue: false,
+    $or: [
+      { notifiedOverdue: false },
+      { notifiedOverdue: { $exists: false } },
+      { notifiedOverdue: null },
+    ],
   }).populate('assignedRepId');
 
   for (const lead of leads) {

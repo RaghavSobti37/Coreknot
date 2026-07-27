@@ -19,6 +19,7 @@ const { detectSheetTemplate } = require('../../../../shared/artistCrmSheetMappin
 const { parseContactField } = require('../../../utils/artistContactFieldParser');
 const { resolveAssigneeForImport, matchAssigneeFromSheetName, listArtistCallAssignees } = require('../../../utils/artistCallAssignees');
 const { bypassOptions } = require('../../../infrastructure/database/bypassTenantPolicy');
+const { resolveDefaultTenantId } = require('../../../utils/defaultTenant');
 
 const TENANT_LOOKUP = bypassOptions('artist_crm_mapped_import');
 const BULK_INSERT_CHUNK = 500;
@@ -123,15 +124,7 @@ function mapRowWithColumnMapping(row, mapping, rowIndex, filename) {
 }
 
 async function resolveTenantId() {
-  const Tenant = require('../../../models/Tenant');
-  let tenant = await Tenant.findOne({ name: 'Default Tenant' }).setOptions(TENANT_LOOKUP);
-  if (!tenant) {
-    tenant = await Tenant.create({
-      name: 'Default Tenant',
-      contactEmail: 'helloworld@theshakticollective',
-    });
-  }
-  return tenant._id;
+  return resolveDefaultTenantId();
 }
 
 async function loadExistingIdentityRegistry(tenantId) {
@@ -255,6 +248,7 @@ async function importArtistCsvWithOptions({
   const { rows } = await readImportRows(filePath, filename);
 
   const importSession = await CRMImport.create({
+    tenantId,
     filename,
     leadCount: 0,
     crmType: CRM_TYPES.ARTIST,
