@@ -46,6 +46,7 @@ import VirtualTaskList from '../../components/tasks/VirtualTaskList';
 import { useDebounce } from '../../hooks/useDebounce';
 import { buildTodoActiveFilterChips } from '../../utils/activeFilterChips';
 import { countActiveFilters } from '../../components/ui/selectionFilterUtils';
+import { isAdminUser } from '../../utils/departmentPermissions';
 
 const TODO_FILTERS_KEY = 'todo-filters';
 const DEFAULT_PAGE_SIZE = 10;
@@ -93,6 +94,7 @@ const TodoPage = () => {
   const [typeFilter, setTypeFilter] = useState(savedFilters?.typeFilter || 'all');
   const [workspaceFilter, setWorkspaceFilter] = useState(savedFilters?.workspaceFilter || 'all');
   const [projectFilter, setProjectFilter] = useState(savedFilters?.projectFilter || 'all');
+  const [userFilter, setUserFilter] = useState(savedFilters?.userFilter || 'all');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(savedFilters?.pageSize || DEFAULT_PAGE_SIZE);
   const [completedPage, setCompletedPage] = useState(1);
@@ -109,6 +111,7 @@ const TodoPage = () => {
     type: typeFilter !== 'all' ? typeFilter : undefined,
     projectId: projectFilter !== 'all' ? projectFilter : undefined,
     workspace: workspaceFilter !== 'all' ? workspaceFilter : undefined,
+    userId: isAdminUser(user) && userFilter !== 'all' ? userFilter : undefined,
     statFilter: statFilter || undefined,
     sort: sortConfig.field || 'dueDate',
     order: sortConfig.order || 'asc',
@@ -118,7 +121,7 @@ const TodoPage = () => {
       : {}),
   }), [
     page, pageSize, debouncedSearch, statusFilter, priorityFilter, typeFilter,
-    projectFilter, workspaceFilter, statFilter, sortConfig, includeOldCompleted,
+    projectFilter, workspaceFilter, userFilter, user, statFilter, sortConfig, includeOldCompleted,
     useSplitCompletedPagination, completedPage, completedPageSize,
   ]);
 
@@ -142,7 +145,7 @@ const TodoPage = () => {
   useEffect(() => {
     setPage(1);
     setCompletedPage(1);
-  }, [debouncedSearch, statusFilter, priorityFilter, typeFilter, workspaceFilter, projectFilter, statFilter]);
+  }, [debouncedSearch, statusFilter, priorityFilter, typeFilter, workspaceFilter, projectFilter, userFilter, statFilter]);
 
   useEffect(() => {
     try {
@@ -155,6 +158,7 @@ const TodoPage = () => {
           typeFilter,
           workspaceFilter,
           projectFilter,
+          userFilter,
           sortConfig,
           statFilter,
           pageSize,
@@ -163,7 +167,7 @@ const TodoPage = () => {
     } catch {
       /* ignore */
     }
-  }, [search, statusFilter, priorityFilter, typeFilter, workspaceFilter, projectFilter, sortConfig, statFilter, pageSize]);
+  }, [search, statusFilter, priorityFilter, typeFilter, workspaceFilter, projectFilter, userFilter, sortConfig, statFilter, pageSize]);
 
   const toggleSort = (field) => {
     setSortConfig((prev) => {
@@ -210,6 +214,11 @@ const TodoPage = () => {
     ...filterProjectsByWorkspace(projects, workspaceFilter).map((p) => ({ value: p._id, label: p.name }))
   ], [projects, workspaceFilter]);
 
+  const userFilterOptions = useMemo(() => [
+    { value: 'all', label: 'All users' },
+    ...users.map((u) => ({ value: u._id, label: u.name || u.email || 'Unnamed user' })),
+  ], [users]);
+
   const activeFilterChips = useMemo(
     () => buildTodoActiveFilterChips(
       {
@@ -219,12 +228,14 @@ const TodoPage = () => {
         typeFilter,
         workspaceFilter,
         projectFilter,
+        userFilter,
         statFilter,
       },
       {
         typeOptions,
         workspaceOptions: workspaceFilterOptions,
         projectOptions: projectFilterOptions,
+        userOptions: userFilterOptions,
       }
     ),
     [
@@ -234,10 +245,12 @@ const TodoPage = () => {
       typeFilter,
       workspaceFilter,
       projectFilter,
+      userFilter,
       statFilter,
       typeOptions,
       workspaceFilterOptions,
       projectFilterOptions,
+      userFilterOptions,
     ]
   );
 
@@ -248,6 +261,7 @@ const TodoPage = () => {
     setTypeFilter('all');
     setWorkspaceFilter('all');
     setProjectFilter('all');
+    setUserFilter('all');
     setStatFilter(null);
     setPage(1);
   }, []);
@@ -275,6 +289,9 @@ const TodoPage = () => {
         break;
       case 'projectFilter':
         setProjectFilter('all');
+        break;
+      case 'userFilter':
+        setUserFilter('all');
         break;
       default:
         break;
@@ -331,15 +348,27 @@ const TodoPage = () => {
       options: projectFilterOptions,
       onChange: setProjectFilter,
     },
+    ...(isAdminUser(user) ? [{
+      id: 'userFilter',
+      label: 'User',
+      type: 'searchable',
+      value: userFilter,
+      defaultValue: 'all',
+      options: userFilterOptions,
+      onChange: setUserFilter,
+    }] : []),
   ], [
     statusFilter,
     priorityFilter,
     typeFilter,
     workspaceFilter,
     projectFilter,
+    userFilter,
+    user,
     typeOptions,
     workspaceFilterOptions,
     projectFilterOptions,
+    userFilterOptions,
   ]);
 
   const getWorkspaceRowProps = (task, isDone) => {

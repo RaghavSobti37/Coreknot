@@ -245,21 +245,28 @@ exports.getTasks = async (req, res, next) => {
       };
     } else if (scope === 'todo') {
       const TaskAssignment = require('../models/TaskAssignment');
-      const assignments = await TaskAssignment.find({ userId: req.user._id }).lean();
+      const filteredUserId = req.query.userId && req.query.userId !== 'all'
+        ? String(req.query.userId)
+        : null;
+
+      if (filteredUserId && !isAdminUser(req.user)) {
+        return res.status(403).json({ error: 'Only admins can filter tasks by user' });
+      }
+      if (filteredUserId && !mongoose.Types.ObjectId.isValid(filteredUserId)) {
+        return res.status(400).json({ error: 'Invalid userId' });
+      }
+
+      const assignmentUserId = filteredUserId || req.user._id;
+      const assignments = await TaskAssignment.find({ userId: assignmentUserId }).lean();
       const taskIds = assignments.map((a) => a.taskId);
-      queryFilter = {
-        $or: [
-          { createdBy: req.user._id },
-          ...(taskIds.length ? [{ _id: { $in: taskIds } }] : []),
-          { mentionAccessIds: req.user._id },
-        ],
-      };
 
       const {
         applyTodoFilters,
         getTodoSort,
         flattenFilterToAndClauses,
+        buildTodoScopeFilter,
       } = require('../../../utils/todoQueryBuilder');
+      queryFilter = buildTodoScopeFilter({ reqUserId: req.user._id, taskIds, filteredUserId });
       const statsBaseFilter = mergeTaskListFilter({ ...queryFilter }, { includeOldCompleted: includeAllCompleted });
       const page = parseInt(req.query.page, 10) || 1;
       const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200);

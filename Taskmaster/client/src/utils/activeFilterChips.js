@@ -35,8 +35,9 @@ export function buildTodoActiveFilterChips({
   typeFilter = 'all',
   workspaceFilter = 'all',
   projectFilter = 'all',
+  userFilter = 'all',
   statFilter = null,
-} = {}, { typeOptions = [], workspaceOptions = [], projectOptions = [] } = {}) {
+} = {}, { typeOptions = [], workspaceOptions = [], projectOptions = [], userOptions = [] } = {}) {
   const chips = [];
   const trimmed = search?.trim();
   if (trimmed) chips.push({ id: 'search', label: `Search: ${trimmed}` });
@@ -64,6 +65,10 @@ export function buildTodoActiveFilterChips({
   if (projectFilter !== 'all') {
     const label = projectOptions.find((o) => o.value === projectFilter)?.label || projectFilter;
     chips.push({ id: 'projectFilter', label: `Project: ${label}` });
+  }
+  if (userFilter !== 'all') {
+    const label = userOptions.find((o) => o.value === userFilter)?.label || userFilter;
+    chips.push({ id: 'userFilter', label: `User: ${label}` });
   }
   return chips;
 }

@@ -1,4 +1,9 @@
-const { applyTodoFilters, getTodoSort, flattenFilterToAndClauses } = require('../utils/todoQueryBuilder');
+const {
+  applyTodoFilters,
+  getTodoSort,
+  flattenFilterToAndClauses,
+  buildTodoScopeFilter,
+} = require('../utils/todoQueryBuilder');
 const { mergeTaskListFilter } = require('../utils/taskListFilter');
 
 describe('todoQueryBuilder', () => {
@@ -77,6 +82,26 @@ describe('todoQueryBuilder', () => {
 
     it('falls back to dueDate for unknown field', () => {
       expect(getTodoSort('unknown', 'asc')).toEqual({ dueDate: 1, _id: 1 });
+    });
+  });
+
+  describe('buildTodoScopeFilter', () => {
+    it('keeps current user created, assigned, and mentioned tasks by default', () => {
+      expect(buildTodoScopeFilter({ reqUserId: 'admin1', taskIds: ['t1'] })).toEqual({
+        $or: [
+          { createdBy: 'admin1' },
+          { _id: { $in: ['t1'] } },
+          { mentionAccessIds: 'admin1' },
+        ],
+      });
+    });
+
+    it('filters admin-selected users to assigned task ids only', () => {
+      expect(buildTodoScopeFilter({
+        reqUserId: 'admin1',
+        filteredUserId: 'user1',
+        taskIds: ['t1', 't2'],
+      })).toEqual({ _id: { $in: ['t1', 't2'] } });
     });
   });
 });

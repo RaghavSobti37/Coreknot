@@ -94,4 +94,18 @@ function getTodoSort(sortField, sortOrder) {
   return { [field]: order, _id: 1 };
 }
 
-module.exports = { applyTodoFilters, getTodoSort, flattenFilterToAndClauses };
+function buildTodoScopeFilter({ reqUserId, taskIds = [], filteredUserId = null } = {}) {
+  if (filteredUserId) {
+    return { _id: { $in: taskIds } };
+  }
+
+  return {
+    $or: [
+      { createdBy: reqUserId },
+      ...(taskIds.length ? [{ _id: { $in: taskIds } }] : []),
+      { mentionAccessIds: reqUserId },
+    ],
+  };
+}
+
+module.exports = { applyTodoFilters, getTodoSort, flattenFilterToAndClauses, buildTodoScopeFilter };

@@ -22,14 +22,17 @@ describe('buildTodoActiveFilterChips', () => {
         search: '  foo ',
         statusFilter: 'open',
         workspaceFilter: 'Default',
+        userFilter: 'u1',
       },
       {
         workspaceOptions: [{ value: 'Default', label: 'Default workspace' }],
+        userOptions: [{ value: 'u1', label: 'Riya' }],
       }
     );
-    expect(chips.map((c) => c.id)).toEqual(['search', 'statusFilter', 'workspaceFilter']);
+    expect(chips.map((c) => c.id)).toEqual(['search', 'statusFilter', 'workspaceFilter', 'userFilter']);
     expect(chips[0].label).toBe('Search: foo');
     expect(chips[2].label).toBe('Workspace: Default workspace');
+    expect(chips[3].label).toBe('User: Riya');
   });
 });
 
