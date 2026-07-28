@@ -37,6 +37,32 @@ const CRM_LEADS_FILTERS_KEY = 'crm-leads-filters';
 
 const CRM_FIELD_SELECT = 'w-full px-3 py-2.5 bg-[var(--color-bg-primary)] border border-[var(--color-bg-border)] rounded-xl text-xs font-bold text-[var(--color-text-primary)] focus:border-[var(--color-action-primary)] outline-none';
 
+const emptyNewLead = (assignedRepId = '') => ({
+  name: '',
+  phoneCountryCode: '+91',
+  phoneNational: '',
+  email: '',
+  city: '',
+  leadStatus: 'New',
+  leadQuality: '3',
+  source: 'Organic / Direct',
+  remarks: '',
+  assignedRepId,
+});
+
+/** Academy/sales → current user; artist → Akash. Dropdown always available. */
+function defaultAssigneeId(team = [], { artistMode, userId } = {}) {
+  if (artistMode) {
+    const akash = team.find((r) => /akash/i.test(r?.name || '') || /akash/i.test(r?.email || ''));
+    if (akash?._id) return String(akash._id);
+  }
+  // Academy (sales) default = self
+  if (userId && team.some((r) => String(r._id) === String(userId))) {
+    return String(userId);
+  }
+  return '';
+}
+
 const loadLeadsFilters = () => {
   try {
     const raw = localStorage.getItem(CRM_LEADS_FILTERS_KEY);
@@ -91,9 +117,7 @@ export default function LeadsPage() {
   const queryClient = useQueryClient();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newLeadData, setNewLeadData] = useState({
-    name: '', phoneCountryCode: '+91', phoneNational: '', email: '', city: '', leadStatus: 'New', leadQuality: '3', source: 'Organic / Direct', remarks: ''
-  });
+  const [newLeadData, setNewLeadData] = useState(() => emptyNewLead());
   const [newLeadErrors, setNewLeadErrors] = useState({});
 
   const { data: leadDetail } = useLeadDetail(selectedLead?._id, !!selectedLead);
@@ -286,9 +310,12 @@ export default function LeadsPage() {
   const handleCreateLead = async (e) => {
     e.preventDefault();
     const { valid, errors, sanitized } = validateLeadFormFields(newLeadData);
+    if (!newLeadData.assignedRepId) {
+      errors.assignedRepId = 'Pick who to assign this lead to';
+    }
     setNewLeadErrors(errors);
-    if (!valid) {
-      toast.error(errors.phone || Object.values(errors)[0] || 'Fix highlighted fields before creating');
+    if (!valid || !newLeadData.assignedRepId) {
+      toast.error(errors.assignedRepId || errors.phone || Object.values(errors)[0] || 'Fix highlighted fields before creating');
       return;
     }
     if (!sanitized.name || (!sanitized.phone && !sanitized.email)) {
@@ -296,9 +323,13 @@ export default function LeadsPage() {
       return;
     }
     try {
-      await createMutation.mutateAsync(sanitized);
+      await createMutation.mutateAsync({
+        ...sanitized,
+        assignedRepId: newLeadData.assignedRepId,
+        ...(artistMode ? { crmType: 'artist' } : {}),
+      });
       setIsAddModalOpen(false);
-      setNewLeadData({ name: '', phoneCountryCode: '+91', phoneNational: '', email: '', city: '', leadStatus: 'New', leadQuality: '3', source: 'Organic / Direct', remarks: '' });
+      setNewLeadData(emptyNewLead());
       setNewLeadErrors({});
       toast.success('Lead created');
     } catch (err) {
@@ -443,6 +474,13 @@ export default function LeadsPage() {
   }, [artistMode, salesTeam, artistTeam]);
   const assignTeam = artistRepContext || artistMode ? artistTeam : filterTeam;
   const { data: crmConfig } = useCRMConfig(deferCrmSecondary);
+
+  const openAddLeadModal = useCallback(() => {
+    const assignee = defaultAssigneeId(assignTeam, { artistMode, userId: user?._id });
+    setNewLeadData(emptyNewLead(assignee));
+    setNewLeadErrors({});
+    setIsAddModalOpen(true);
+  }, [assignTeam, artistMode, user?._id]);
 
   const leads = data?.leads || [];
   const totalLeads = data?.total || 0;
@@ -830,7 +868,7 @@ export default function LeadsPage() {
       toolbarActions={(
         <>
           {artistCrmView && <ArtistCrmImportPanel compact />}
-          <Button size="sm" onClick={() => setIsAddModalOpen(true)} data-mobile-primary>
+          <Button size="sm" onClick={openAddLeadModal} data-mobile-primary>
             <Plus size={14} /> {artistMode ? 'Add Contact' : 'Add Lead'}
           </Button>
         </>
@@ -1330,6 +1368,25 @@ export default function LeadsPage() {
             value={newLeadData.remarks}
             onChange={e => setNewLeadData({ ...newLeadData, remarks: e.target.value })}
           />
+          <div>
+            <label className="block text-[10px] font-black uppercase tracking-wider text-[var(--color-text-secondary)] mb-1">
+              {artistMode ? 'Assign Manager *' : 'Assign Agent *'}
+            </label>
+            <select
+              className="w-full px-3 py-2 bg-[var(--color-bg-workspace)] border border-[var(--color-bg-border)] rounded-xl text-xs font-bold text-[var(--color-text-primary)] focus:border-[var(--color-action-primary)] outline-none"
+              value={newLeadData.assignedRepId || ''}
+              onChange={(e) => setNewLeadData({ ...newLeadData, assignedRepId: e.target.value })}
+              required
+            >
+              <option value="">Select assignee…</option>
+              {assignTeam.map((rep) => (
+                <option key={rep._id} value={rep._id}>{rep.name}</option>
+              ))}
+            </select>
+            {newLeadErrors.assignedRepId && (
+              <p className="mt-1 text-[10px] font-bold text-red-500">{newLeadErrors.assignedRepId}</p>
+            )}
+          </div>
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button size="sm" variant="ghost" type="button" onClick={() => setIsAddModalOpen(false)}>
               Cancel

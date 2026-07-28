@@ -156,8 +156,10 @@ async function processArtistEnquiryLogic(data) {
   broadcastRealtimeEvent('tasks', 'task_change', { taskId: taskDto._id, action: 'create' });
   broadcastRealtimeEvent('logs', 'log_update', { taskId: taskDto._id, action: 'CREATE_TASK' });
 
-  const assigneeId = (await resolvePrimaryCallAssigneeId())
-    || (assigneeIds[0] ? assigneeIds[0] : await assignLeadToArtistRep());
+  // ponytail: artist/events booking leads → Akash
+  const assigneeId = (await assignLeadToArtistRep())
+    || (await resolvePrimaryCallAssigneeId())
+    || (assigneeIds[0] || null);
   const artistProject = resolveProjectNameFromArtist(normalized.artist) || project.name;
 
   const identity = normalizePersonRecord(

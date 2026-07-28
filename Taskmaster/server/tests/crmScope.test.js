@@ -1,4 +1,4 @@
-const { resolveCrmScope, applyCrmScopeToQuery } = require('../utils/crmScope');
+const { resolveCrmScope, applyCrmScopeToQuery, shouldRestrictCrmMutationsToOwn } = require('../utils/crmScope');
 const { CRM_TYPES } = require('../../shared/artistCrmTaxonomy');
 
 describe('crmScope', () => {
@@ -17,22 +17,27 @@ describe('crmScope', () => {
     departmentId: { slug: 'admin', permissionPreset: 'admin' },
   };
 
-  it('artist-management sees only assigned artist CRM leads', () => {
+  it('artist-management sees all artist CRM leads (shared team)', () => {
     expect(resolveCrmScope(artistUser)).toEqual({
       crmType: CRM_TYPES.ARTIST,
-      restrictToOwn: true,
+      restrictToOwn: false,
     });
 
     const query = {};
     applyCrmScopeToQuery(query, artistUser);
     expect(query).toEqual({
       crmType: CRM_TYPES.ARTIST,
-      assignedRepId: expect.any(Object),
     });
-    expect(String(query.assignedRepId)).toBe(artistUser._id);
+    expect(query.assignedRepId).toBeUndefined();
   });
 
-  it('sales reps see only assigned sales pipeline leads', () => {
+  it('artist-management may mutate any artist lead; sales/academy may not', () => {
+    expect(shouldRestrictCrmMutationsToOwn(artistUser)).toBe(false);
+    expect(shouldRestrictCrmMutationsToOwn(salesUser)).toBe(true);
+    expect(shouldRestrictCrmMutationsToOwn(adminUser)).toBe(false);
+  });
+
+  it('sales/academy reps see only assigned sales pipeline leads', () => {
     expect(resolveCrmScope(salesUser)).toEqual({
       crmType: CRM_TYPES.SALES,
       restrictToOwn: true,

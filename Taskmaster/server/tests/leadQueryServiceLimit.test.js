@@ -24,4 +24,16 @@ describe('leadQueryService list limits', () => {
 
     expect(String(query.assignedRepId)).toBe(user._id);
   });
+
+  it('lets artist-management filter shared pipeline by assignedRepId', () => {
+    const user = {
+      _id: '507f1f77bcf86cd799439011',
+      departmentId: { slug: 'artist-management' },
+    };
+    const otherRep = '507f1f77bcf86cd799439099';
+    const query = buildLeadListQuery(user, { assignedRepId: otherRep });
+
+    expect(query.crmType).toBe('artist');
+    expect(String(query.assignedRepId)).toBe(otherRep);
+  });
 });

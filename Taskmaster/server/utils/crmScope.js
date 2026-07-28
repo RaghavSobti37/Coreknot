@@ -17,6 +17,8 @@ function applySalesCrmTypeFilter(query) {
 
 /**
  * Resolve CRM segment filter for the current user.
+ * Artist-management: shared team pipeline (see all artist leads).
+ * Sales / Academy: own leads only.
  * @returns {{ crmType: string|null, restrictToOwn: boolean }}
  */
 function resolveCrmScope(user, queryCrmType) {
@@ -29,7 +31,8 @@ function resolveCrmScope(user, queryCrmType) {
 
   const slug = getDepartmentSlug(user);
   if (slug === ARTIST_SLUG) {
-    return { crmType: CRM_TYPES.ARTIST, restrictToOwn: true };
+    // ponytail: artist team shares the full artist CRM list
+    return { crmType: CRM_TYPES.ARTIST, restrictToOwn: false };
   }
   if (slug === SALES_SLUG) {
     return { crmType: CRM_TYPES.SALES, restrictToOwn: true };
@@ -43,12 +46,12 @@ function resolveCrmScope(user, queryCrmType) {
 }
 
 /**
- * CRM users may only mutate leads assigned to them unless they are admins.
+ * Academy/sales may only mutate own leads. Artist-management may mutate any artist lead.
  */
 function shouldRestrictCrmMutationsToOwn(user) {
   if (isAdminUser(user)) return false;
   const slug = getDepartmentSlug(user);
-  if (slug === ARTIST_SLUG) return true;
+  if (slug === ARTIST_SLUG) return false;
   if (slug === SALES_SLUG) return true;
   return true;
 }

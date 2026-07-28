@@ -23,7 +23,11 @@ const { queueGamificationEvent } = require('../../../services/backgroundQueue');
 const { getDepartmentSlug, ARTIST_SLUG } = require('../../../utils/departmentPermissions');
 const { CRM_TYPES } = require('../../../../shared/artistCrmTaxonomy');
 const { normalizeAndValidateLeadFields } = require('../../../utils/leadValidation');
-const { assignLeadToRep, assignLeadToArtistRep } = require('../../../utils/crmAssignment');
+const {
+  assignLeadToRep,
+  assignLeadToArtistRep,
+  isArtistOrEventsLead,
+} = require('../../../utils/crmAssignment');
 const { applyCrmScopeToQuery, shouldRestrictCrmMutationsToOwn } = require('../../../utils/crmScope');
 const auditService = require('./auditService');
 const { getTenantId } = require('../../../utils/tenantContext');
@@ -303,9 +307,11 @@ async function createLead(user, body) {
   }
 
   if (!leadData.assignedRepId) {
-    leadData.assignedRepId = leadData.crmType === CRM_TYPES.ARTIST
-      ? await assignLeadToArtistRep()
-      : await assignLeadToRep();
+    if (isArtistOrEventsLead(leadData)) {
+      leadData.assignedRepId = await assignLeadToArtistRep();
+    } else {
+      return { error: 'Assigned agent is required', status: 400 };
+    }
   }
 
   const PersonIdentityService = require('../../../services/PersonIdentityService');
@@ -361,7 +367,9 @@ async function createLeadFromForm(user, body, { defaultSource, defaultLeadStatus
   }
 
   if (!leadData.assignedRepId) {
-    leadData.assignedRepId = await assignLeadToRep();
+    leadData.assignedRepId = isArtistOrEventsLead(leadData)
+      ? await assignLeadToArtistRep()
+      : await assignLeadToRep();
   }
 
   if (body.message && !leadData.remarks) {
