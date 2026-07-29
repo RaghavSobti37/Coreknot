@@ -37,6 +37,7 @@ async function registerAndLogin(agent, email, name) {
 describe('CRM API integration', () => {
   let salesAgent;
   let outsiderAgent;
+  let salesUserId;
   let stamp;
 
   beforeEach(async () => {
@@ -45,7 +46,7 @@ describe('CRM API integration', () => {
     salesAgent = request.agent(app);
     outsiderAgent = request.agent(app);
 
-    const salesUserId = await registerAndLogin(
+    salesUserId = await registerAndLogin(
       salesAgent,
       `crm-sales-${stamp}@coreknot-test.local`,
       'CRM Sales Rep'
@@ -78,6 +79,7 @@ describe('CRM API integration', () => {
       phone: leadPhone,
       email: `lead-${stamp}@coreknot-test.local`,
       leadStatus: 'New',
+      assignedRepId: salesUserId,
       nextFollowupDate: followupDate,
       nextFollowupTime: '10:00',
     });
@@ -128,6 +130,7 @@ describe('CRM API integration', () => {
       phone: leadPhone,
       email: `delete-own-${stamp}@coreknot-test.local`,
       leadStatus: 'New',
+      assignedRepId: salesUserId,
     });
     expect(createRes.statusCode).toBe(201);
 
@@ -193,6 +196,7 @@ describe('CRM API integration', () => {
     const createRes = await salesAgent.post('/api/crm/leads').send({
       name: 'Followup Lead',
       phone: leadPhone,
+      assignedRepId: salesUserId,
       nextFollowupDate: followupDate,
       nextFollowupTime: '14:30',
     });
@@ -219,6 +223,7 @@ describe('CRM API integration', () => {
       phone: leadPhone,
       email: `sidefx-${Date.now()}@coreknot-test.local`,
       leadStatus: 'New',
+      assignedRepId: salesUserId,
     });
 
     expect(createRes.statusCode).toBe(201);

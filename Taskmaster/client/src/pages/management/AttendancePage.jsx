@@ -39,6 +39,7 @@ import SelfMonthlyAttendanceCalendar from '../../components/attendance/SelfMonth
 import TeamAttendanceMobileList from '../../components/attendance/TeamAttendanceMobileList';
 import UnifiedTimeCard from '../../components/attendance/UnifiedTimeCard';
 import AttendanceStatusLegend from '../../components/attendance/AttendanceStatusLegend';
+import { buildInAttendancePayload, buildOutAttendancePayload } from '../../utils/attendanceApprovalPayload';
 
 const VIEW_MODES = {
   DAILY: 'daily',
@@ -51,19 +52,6 @@ const PASTEL_ROSE_CELL = 'bg-[var(--color-pastel-rose-bg)] border-[var(--color-p
 const PASTEL_ROSE_TEXT = 'text-[var(--color-pastel-rose-text)]';
 const PASTEL_VIOLET_CELL = 'bg-[var(--color-pastel-violet-bg)] border-[var(--color-pastel-violet-text)]/20';
 const PASTEL_VIOLET_TEXT = 'text-[var(--color-pastel-violet-text)]';
-
-const preserveTimeRecord = (record) => {
-  if (!record?.manualTimestamp) return undefined;
-  return {
-    manualTimestamp: record.manualTimestamp,
-    workMode: record.workMode || 'office',
-    verificationMethod: record.verificationMethod || 'MANUAL',
-    isApproved: !!record.isApproved,
-    ...(record.systemTimestamp ? { systemTimestamp: record.systemTimestamp } : {}),
-    ...(record.approvedBy ? { approvedBy: record.approvedBy } : {}),
-  };
-};
-
 
 const APPROVED_CELL = 'bg-blue-500/10 border-blue-500/30';
 
@@ -321,17 +309,7 @@ const AttendancePage = () => {
   const saveInCell = () => {
     if (!editInCell || editInLocked) return;
     const { userRow, date, entry } = editInCell;
-    const payload = {
-      userId: userRow._id,
-      username: userRow.name,
-      date: format(date, 'yyyy-MM-dd'),
-      onLeave: !!entry?.onLeave,
-      isHalfDay: !!entry?.isHalfDay,
-      inTimeRecord: editInForm.inTime
-        ? { manualTimestamp: editInForm.inTime, workMode: editInForm.inMode, verificationMethod: 'MANUAL' }
-        : undefined,
-      outTimeRecord: preserveTimeRecord(entry?.outTimeRecord),
-    };
+    const payload = buildInAttendancePayload({ userRow, date: format(date, 'yyyy-MM-dd'), entry, form: editInForm });
     upsertAttendance.mutate(payload, {
       onSuccess: () => setEditInCell(null),
       onError: (error) => addToast({ type: 'error', message: error.response?.data?.error || 'Failed to save', module: MODULE.ATTENDANCE }),
@@ -341,17 +319,7 @@ const AttendancePage = () => {
   const saveOutCell = () => {
     if (!editOutCell || editOutLocked) return;
     const { userRow, date, entry } = editOutCell;
-    const payload = {
-      userId: userRow._id,
-      username: userRow.name,
-      date: format(date, 'yyyy-MM-dd'),
-      onLeave: !!entry?.onLeave,
-      isHalfDay: !!entry?.isHalfDay,
-      inTimeRecord: preserveTimeRecord(entry?.inTimeRecord),
-      outTimeRecord: editOutForm.outTime
-        ? { manualTimestamp: editOutForm.outTime, workMode: editOutForm.outMode, verificationMethod: 'MANUAL' }
-        : undefined,
-    };
+    const payload = buildOutAttendancePayload({ userRow, date: format(date, 'yyyy-MM-dd'), entry, form: editOutForm });
     upsertAttendance.mutate(payload, {
       onSuccess: () => setEditOutCell(null),
       onError: (error) => addToast({ type: 'error', message: error.response?.data?.error || 'Failed to save', module: MODULE.ATTENDANCE }),
@@ -362,6 +330,42 @@ const AttendancePage = () => {
   const hasOutEdits = !!editOutCell && !!editOutBaseline && !stableJsonEqual(editOutForm, editOutBaseline);
   const editInLocked = !!editInCell?.entry?.inTimeRecord?.isApproved;
   const editOutLocked = !!editOutCell?.entry?.outTimeRecord?.isApproved;
+
+  const handleApproveInCell = () => {
+    if (!editInCell || editInLocked) return;
+    const closeModal = () => setEditInCell(null);
+    const onError = (error) => addToast({ type: 'error', message: error.response?.data?.error || 'Failed to approve', module: MODULE.ATTENDANCE });
+    if (editInCell.entry?._id) {
+      approveAttendance.mutate(
+        { id: editInCell.entry._id, approvalTarget: 'IN', manualTime: editInForm.inTime, workMode: editInForm.inMode },
+        { onSuccess: (data) => handleApproveSuccess(data, closeModal), onError }
+      );
+      return;
+    }
+    const { userRow, date, entry } = editInCell;
+    upsertAttendance.mutate(
+      buildInAttendancePayload({ userRow, date: format(date, 'yyyy-MM-dd'), entry, form: editInForm, approved: true }),
+      { onSuccess: (data) => handleApproveSuccess(data, closeModal), onError }
+    );
+  };
+
+  const handleApproveOutCell = () => {
+    if (!editOutCell || editOutLocked) return;
+    const closeModal = () => setEditOutCell(null);
+    const onError = (error) => addToast({ type: 'error', message: error.response?.data?.error || 'Failed to approve', module: MODULE.ATTENDANCE });
+    if (editOutCell.entry?._id) {
+      approveAttendance.mutate(
+        { id: editOutCell.entry._id, approvalTarget: 'OUT', manualTime: editOutForm.outTime, workMode: editOutForm.outMode },
+        { onSuccess: (data) => handleApproveSuccess(data, closeModal), onError }
+      );
+      return;
+    }
+    const { userRow, date, entry } = editOutCell;
+    upsertAttendance.mutate(
+      buildOutAttendancePayload({ userRow, date: format(date, 'yyyy-MM-dd'), entry, form: editOutForm, approved: true }),
+      { onSuccess: (data) => handleApproveSuccess(data, closeModal), onError }
+    );
+  };
 
   const { revert: revertInEdits } = useUnsavedChanges({
     baseline: editInBaseline,
@@ -693,11 +697,8 @@ const AttendancePage = () => {
             readOnly={editInLocked}
             editForm={editInForm}
             setEditForm={setEditInForm}
-            onApproveIn={() => approveAttendance.mutate(
-              { id: editInCell.entry._id, approvalTarget: 'IN', manualTime: editInForm.inTime, workMode: editInForm.inMode },
-              { onSuccess: (data) => handleApproveSuccess(data, () => setEditInCell(null)) }
-            )}
-            isLoading={approveAttendance.isPending}
+            onApproveIn={handleApproveInCell}
+            isLoading={approveAttendance.isPending || upsertAttendance.isPending}
           />
         )}
       </NexusModal>
@@ -746,11 +747,8 @@ const AttendancePage = () => {
             readOnly={editOutLocked}
             editForm={editOutForm}
             setEditForm={setEditOutForm}
-            onApproveOut={() => approveAttendance.mutate(
-              { id: editOutCell.entry._id, approvalTarget: 'OUT', manualTime: editOutForm.outTime, workMode: editOutForm.outMode },
-              { onSuccess: (data) => handleApproveSuccess(data, () => setEditOutCell(null)) }
-            )}
-            isLoading={approveAttendance.isPending}
+            onApproveOut={handleApproveOutCell}
+            isLoading={approveAttendance.isPending || upsertAttendance.isPending}
           />
         )}
       </NexusModal>

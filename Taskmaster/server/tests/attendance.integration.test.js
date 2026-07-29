@@ -2,6 +2,7 @@ const request = require('supertest');
 const app = require('../server');
 const User = require('../models/User');
 const Department = require('../models/Department');
+const Attendance = require('../models/Attendance');
 const { formatHHMM } = require('../utils/attendanceDate');
 const { DEV_DEFAULT_PASSWORD } = require('../../shared/defaultPassword');
 const { mintSessionAgent } = require('./helpers/mintTestSession');
@@ -177,6 +178,33 @@ describe('Attendance API integration', () => {
     const res = await opsAgent.get('/api/attendance/roster-users');
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body.users)).toBe(true);
+  });
+
+  it('allows ops user to create and approve a missing check-in row by user/date', async () => {
+    const target = await User.findOne({ name: 'Attendance User' }).sort({ createdAt: -1 });
+    const ops = await User.findOne({ name: 'Attendance Ops' }).sort({ createdAt: -1 });
+
+    const res = await opsAgent.put('/api/attendance/upsert/by-user-date').send({
+      userId: target._id,
+      username: target.name,
+      date: '2026-07-28',
+      inTimeRecord: {
+        manualTimestamp: '10:30',
+        workMode: 'office',
+        isApproved: true,
+        approvedBy: target._id,
+      },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body._id).toBeTruthy();
+    expect(res.body.inTimeRecord?.manualTimestamp).toBe('10:30');
+    expect(res.body.inTimeRecord?.isApproved).toBe(true);
+    expect(String(res.body.inTimeRecord?.approvedBy)).toBe(String(ops._id));
+
+    const row = await Attendance.findById(res.body._id);
+    expect(row.inTimeRecord.isApproved).toBe(true);
+    expect(String(row.inTimeRecord.approvedBy)).toBe(String(ops._id));
   });
 
   it('blocks non-ops user from roster-users endpoint', async () => {

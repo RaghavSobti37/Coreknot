@@ -44,7 +44,9 @@ export const useUndoAttendanceCheck = () => {
 export const useApproveAttendance = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, approvalTarget, manualTime, workMode }) => axios.patch(`/api/attendance/${id}/approve`, { approvalTarget, manualTime, workMode }),
+    mutationFn: async ({ id, approvalTarget, manualTime, workMode }) => (
+      await axios.patch(`/api/attendance/${id}/approve`, { approvalTarget, manualTime, workMode })
+    ).data,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
       queryClient.invalidateQueries({ queryKey: ['attendanceRosterUsers'] });
@@ -116,7 +118,7 @@ export const useResetAttendance = () => {
 export const useUpsertAttendance = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload) => axios.put('/api/attendance/upsert/by-user-date', payload),
+    mutationFn: async (payload) => (await axios.put('/api/attendance/upsert/by-user-date', payload)).data,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
       queryClient.invalidateQueries({ queryKey: ['attendanceRosterUsers'] });

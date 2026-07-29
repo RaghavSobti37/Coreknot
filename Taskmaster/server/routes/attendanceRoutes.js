@@ -53,6 +53,19 @@ const DISCREPANCY_THRESHOLD_MINUTES = 30;
 
 const computeAttendanceMetrics = (attendanceDoc) => refreshAttendanceMetrics(attendanceDoc);
 
+const normalizeManualTimeRecord = (record, existingRecord, approverId) => {
+  if (!record?.manualTimestamp) return undefined;
+  const isApproved = !!record.isApproved;
+  return {
+    manualTimestamp: record.manualTimestamp,
+    workMode: record.workMode === 'wfh' ? 'wfh' : 'office',
+    verificationMethod: 'MANUAL',
+    isApproved,
+    ...(record.systemTimestamp ? { systemTimestamp: record.systemTimestamp } : {}),
+    ...(isApproved ? { approvedBy: existingRecord?.approvedBy || approverId } : {}),
+  };
+};
+
 router.use(protect);
 
 router.get('/roster-users', validateQuery(rosterUsersQuery), async (req, res) => {
@@ -274,10 +287,14 @@ router.put('/upsert/by-user-date', async (req, res) => {
     if (!isOps(req.user)) return res.status(403).json({ error: 'Only operations can edit attendance' });
     const { userId, username, date, inTimeRecord, outTimeRecord, isHalfDay, onLeave, reason } = req.body;
     if (!userId || !date) return res.status(400).json({ error: 'userId and date are required' });
+    const dateStart = toStartOfDay(date);
+    const existing = await Attendance.findOne({ userId, date: dateStart });
+    const normalizedInTimeRecord = normalizeManualTimeRecord(inTimeRecord, existing?.inTimeRecord, req.user._id);
+    const normalizedOutTimeRecord = normalizeManualTimeRecord(outTimeRecord, existing?.outTimeRecord, req.user._id);
     const timeValidation = validateAttendanceTimes({
-      dateKey: getDateKey(toStartOfDay(date)),
-      timeIn: inTimeRecord?.manualTimestamp,
-      timeOut: outTimeRecord?.manualTimestamp,
+      dateKey: getDateKey(dateStart),
+      timeIn: normalizedInTimeRecord?.manualTimestamp,
+      timeOut: normalizedOutTimeRecord?.manualTimestamp,
       onLeave: !!onLeave,
       isHalfDay: !!isHalfDay,
     });
@@ -286,14 +303,14 @@ router.put('/upsert/by-user-date', async (req, res) => {
     }
 
     const row = await Attendance.findOneAndUpdate(
-      { userId, date: toStartOfDay(date) },
+      { userId, date: dateStart },
       {
         $set: {
           userId,
           username,
-          date: toStartOfDay(date),
-          inTimeRecord: inTimeRecord ? { ...inTimeRecord, verificationMethod: 'MANUAL' } : undefined,
-          outTimeRecord: outTimeRecord ? { ...outTimeRecord, verificationMethod: 'MANUAL' } : undefined,
+          date: dateStart,
+          inTimeRecord: normalizedInTimeRecord,
+          outTimeRecord: normalizedOutTimeRecord,
           isHalfDay: !!isHalfDay,
           onLeave: !!onLeave,
           reason: reason || '',
