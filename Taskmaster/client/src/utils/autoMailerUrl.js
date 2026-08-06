@@ -3,9 +3,9 @@ const PRODUCTION_AUTO_MAILER_URL = 'https://auto-mailer-blue.vercel.app';
 const trimSlash = (url) => String(url || '').trim().replace(/\/$/, '');
 
 export function getAutoMailerOrigin() {
+  // ponytail: prod UI by default; set VITE_AUTO_MAILER_URL for local Auto-Mailer
   const fromEnv = trimSlash(import.meta.env.VITE_AUTO_MAILER_URL);
   if (fromEnv) return fromEnv;
-  if (import.meta.env.DEV) return 'http://localhost:5001';
   return PRODUCTION_AUTO_MAILER_URL;
 }
 

@@ -4,7 +4,9 @@
 
 **Canonical spec (tokens, archetypes, route map):** [COREKNOT_DESIGN_SYSTEM.md](./COREKNOT_DESIGN_SYSTEM.md)
 
-Related: [COMPONENT_STANDARDS.md](../reference/COMPONENT_STANDARDS.md) (UDIF implementation), [design_guidelines.md](../../client/design_guidelines.md) (data-first layout), [dateDisplay.js](../../client/src/utils/dateDisplay.js) (DD/MM/YYYY).
+**New / restyle responsive pages:** [RESPONSIVE_PAGE_PLAYBOOK.md](./RESPONSIVE_PAGE_PLAYBOOK.md) — breakpoints, gutters, archetypes, scaffolds, device matrix.
+
+Related: [COMPONENT_STANDARDS.md](../reference/COMPONENT_STANDARDS.md) (UDIF implementation), [design_guidelines.md](../../Taskmaster/client/design_guidelines.md) (data-first layout), [dateDisplay.js](../../Taskmaster/client/src/utils/dateDisplay.js) (DD/MM/YYYY).
 
 ---
 
@@ -25,6 +27,7 @@ Related: [COMPONENT_STANDARDS.md](../reference/COMPONENT_STANDARDS.md) (UDIF imp
 | When | Action |
 |------|--------|
 | Before editing `client/**` | Read this file + run checklist above |
+| **New page / responsive layout** | Follow [RESPONSIVE_PAGE_PLAYBOOK.md](./RESPONSIVE_PAGE_PLAYBOOK.md) end-to-end |
 | New list/data page | Use `ListPageLayout` + `PageToolbar` + `SelectionFilterPanel` |
 | New module hub (CRM, Management, Office) | Use `HubPageLayout` / `TabHubLayout` |
 | Visual tokens / colors | `client/src/index.css`, `@coreknot/design-tokens` — one accent from logo teal |

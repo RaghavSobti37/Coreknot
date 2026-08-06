@@ -13,6 +13,7 @@
 | 3 | [`operations/local-development.md`](./operations/local-development.md) | Local install & run |
 | 4 | [`operations/environments.md`](./operations/environments.md) | Hosts, DBs, webhooks |
 | 5 | [`design/DESIGN-REFERENCE.md`](./design/DESIGN-REFERENCE.md) | UI checklist (mandatory for client changes) |
+| 5b | [`design/RESPONSIVE_PAGE_PLAYBOOK.md`](./design/RESPONSIVE_PAGE_PLAYBOOK.md) | **Build any page** — breakpoints, gutters, scaffolds, device align |
 
 ---
 
@@ -47,7 +48,8 @@ node scripts/generate-master-doc.mjs
 | Topic | Document |
 | --- | --- |
 | **Master (all pages)** | [`reference/COREKNOT_MASTER.md`](./reference/COREKNOT_MASTER.md) |
-| UI components | [`reference/COMPONENT_STANDARDS.md`](./reference/COMPONENT_STANDARDS.md), `client/design_guidelines.md` |
+| UI components | [`reference/COMPONENT_STANDARDS.md`](./reference/COMPONENT_STANDARDS.md), [`design/RESPONSIVE_PAGE_PLAYBOOK.md`](./design/RESPONSIVE_PAGE_PLAYBOOK.md) |
+| Design system | [`design/COREKNOT_DESIGN_SYSTEM.md`](./design/COREKNOT_DESIGN_SYSTEM.md), [`design/DESIGN-REFERENCE.md`](./design/DESIGN-REFERENCE.md) |
 | Email tracking (locked) | [`reference/EMAIL_ENGINE_LOCKED.md`](./reference/EMAIL_ENGINE_LOCKED.md) |
 | Logo / spinner (locked) | [`reference/LOGO_LOCKED.md`](./reference/LOGO_LOCKED.md) |
 | Version history | [`reference/VERSION_HISTORY.md`](./reference/VERSION_HISTORY.md) |

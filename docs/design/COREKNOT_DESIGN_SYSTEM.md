@@ -2,6 +2,8 @@
 
 > Canonical reference for visual identity, layout patterns, components, and page-level conventions across CoreKnot. Consolidated from `DESIGN-REFERENCE.md`, token files, `App.jsx`, and `page-inventory.json`.
 
+**Building a new responsive page?** Start with [RESPONSIVE_PAGE_PLAYBOOK.md](./RESPONSIVE_PAGE_PLAYBOOK.md) — then return here for tokens / route map.
+
 **Routing convention:** all app routes are org-scoped — `/:orgSlug/...` (e.g. `/tsc/dashboard`) — unless explicitly marked public/marketing.
 
 ---

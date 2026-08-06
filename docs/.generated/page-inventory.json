@@ -1455,7 +1455,7 @@
     "routes": [
       "(tab: leads)"
     ],
-    "lines": 1349,
+    "lines": 1406,
     "defaultExport": "function",
     "namedExports": [],
     "hooks": [
@@ -1849,7 +1849,7 @@
       "/attendance",
       "/attendance/all"
     ],
-    "lines": 782,
+    "lines": 780,
     "defaultExport": "AttendancePage",
     "namedExports": [],
     "hooks": [
@@ -2786,7 +2786,7 @@
     "routes": [
       "/todo"
     ],
-    "lines": 768,
+    "lines": 797,
     "defaultExport": "TodoPage",
     "namedExports": [],
     "hooks": [

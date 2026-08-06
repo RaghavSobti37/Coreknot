@@ -1,7 +1,7 @@
 # CoreKnot — Master Reference
 
 > **Canonical product bible.** Every routed page, APIs, hooks, exports, and access rules.  
-> **Product:** CoreKnot · **Repo:** `coreknot/Taskmaster` · **Version:** 1.0.8-beta.3 · **Compiled:** 2026-07-23
+> **Product:** CoreKnot · **Repo:** `coreknot/Taskmaster` · **Version:** 1.0.8-beta.3 · **Compiled:** 2026-07-29
 
 ---
 
@@ -490,7 +490,7 @@ _No direct `/api/...` string literals — data via shared hooks (e.g. `useTaskma
 | --- | --- |
 | **Route(s)** | /todo |
 | **Default export** | `TodoPage` |
-| **Lines** | 768 |
+| **Lines** | 797 |
 | **Hooks** | `useAuth`, `useCallback`, `useDebounce`, `useDeferredQueryEnabled`, `useEffect`, `useMemo`, `useProjects`, `useQueryClient`, `useState`, `useSystemToast`, `useTaskCategoryOptions`, `useTodoTasks`, `useUserDirectory`, `useWorkspaces` |
 | **Data hooks** | `useAuth` → /api/artists/${artistId}, /api/artists/${artistId}/claim, /api/artists/${artistId}/members · `useDebounce` → /api/crm/leads/${highlightId}, /api/crm/leads/${id}, /api/crm/leads/${leadId}/audit · `useDeferredQueryEnabled` → /api/admin/media-contacts, /api/admin/media-contacts/filters, /api/admin/platform-settings · `useProjects` → /api/auth/google?state=link_${user?._id}, /api/calendar, /api/calendar/${initialData._id} · `useSystemToast` → /api/calendar, /api/calendar/${initialData._id}, /api/crm/leads/cleanup-test-data · `useTaskCategoryOptions` → /api/departments/task-types, /api/tasks/${task?._id} · `useTodoTasks` → /api/tasks, /api/tasks/${id}, /api/tasks/${task?._id} · `useUserDirectory` → /api/admin/platform-settings, /api/assets, /api/contacts · `useWorkspaces` → /api/auth/google?state=link_${user?._id}, /api/finance/${id}, /api/finance/${id}/approve |
 | **Key components** | `CompletedTaskRollbackButton`, `FlashHighlightListener`, `ListCard`, `ListPageLayout`, `MentionTitle`, `PageLoadGuard`, `PageSkeleton`, `SearchInput`, `TaskMentionBadge`, `VirtualTaskList` |
@@ -624,7 +624,7 @@ _No direct `/api/...` string literals — data via shared hooks (e.g. `useTaskma
 | --- | --- |
 | **Route(s)** | (tab: leads) |
 | **Default export** | `function` |
-| **Lines** | 1349 |
+| **Lines** | 1406 |
 | **Hooks** | `useArtistImportSheets`, `useArtistReps`, `useAuth`, `useCRMConfig`, `useCRMStats`, `useCallback`, `useConfirm`, `useCreateLead`, `useDebounce`, `useDeferredQueryEnabled`, `useEffect`, `useLeadDetail`, `useLiveLeads`, `useMemo`, `useQueryClient`, `useRef`, `useSalesReps`, `useSearchParams`, `useState`, `useToast`, `useUnsavedChanges`, `useUpdateLead` |
 | **Data hooks** | `useArtistImportSheets` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useArtistReps` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useAuth` → /api/artists/${artistId}, /api/artists/${artistId}/claim, /api/artists/${artistId}/members · `useCRMConfig` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useCRMStats` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useConfirm` → /api/contacts, /api/contacts/${editingContact._id}, /api/contacts/${id} · `useCreateLead` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useDebounce` → /api/crm/leads/${highlightId}, /api/crm/leads/${id}, /api/crm/leads/${leadId}/audit · `useDeferredQueryEnabled` → /api/admin/media-contacts, /api/admin/media-contacts/filters, /api/admin/platform-settings · `useLeadDetail` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useLiveLeads` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useSalesReps` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useSearchParams` → /api/auth/google?state=link_${user?._id}, /api/auth/reset-password, /api/crm/leads/${highlightId} · `useToast` → /api/admin/platform-settings, /api/admin/tenants, /api/admin/tenants/${tenant._id} · `useUnsavedChanges` → /api/admin/platform-settings, /api/auth/change-required-password, /api/auth/google?state=link_${user?._id} · `useUpdateLead` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports |
 | **Key components** | `ArtistBookingEnquiryPanel`, `ArtistCrmImportPanel`, `LeadArtistJourneySection`, `LeadLockIndicator`, `LeadRowActions`, `PhoneNumberFields` |
@@ -798,7 +798,7 @@ _No direct `/api/...` string literals — data via shared hooks (e.g. `useTaskma
 | --- | --- |
 | **Route(s)** | /attendance, /attendance/all |
 | **Default export** | `AttendancePage` |
-| **Lines** | 782 |
+| **Lines** | 780 |
 | **Hooks** | `useApproveAttendance`, `useApproveLeaveRequest`, `useAttendance`, `useAttendanceCheck`, `useAttendanceRosterUsers`, `useAuth`, `useDeferredQueryEnabled`, `useEffect`, `useLeaveRequests`, `useLocation`, `useMemo`, `useNavigate`, `useRejectLeaveRequest`, `useResetAttendance`, `useState`, `useSystemToast`, `useUndoAttendanceCheck`, `useUnsavedChanges`, `useUpsertAttendance` |
 | **Data hooks** | `useApproveAttendance` → /api/attendance, /api/attendance/${id}/approve, /api/attendance/check · `useApproveLeaveRequest` → /api/attendance, /api/attendance/${id}/approve, /api/attendance/check · `useAttendance` → /api/attendance, /api/attendance/${id}/approve, /api/attendance/check · `useAttendanceCheck` → /api/attendance, /api/attendance/${id}/approve, /api/attendance/check · `useAttendanceRosterUsers` → /api/attendance, /api/attendance/${id}/approve, /api/attendance/check · `useAuth` → /api/artists/${artistId}, /api/artists/${artistId}/claim, /api/artists/${artistId}/members · `useDeferredQueryEnabled` → /api/admin/media-contacts, /api/admin/media-contacts/filters, /api/admin/platform-settings · `useLeaveRequests` → /api/attendance, /api/attendance/${id}/approve, /api/attendance/check · `useRejectLeaveRequest` → /api/attendance, /api/attendance/${id}/approve, /api/attendance/check · `useResetAttendance` → /api/attendance, /api/attendance/${id}/approve, /api/attendance/check · `useSystemToast` → /api/calendar, /api/calendar/${initialData._id}, /api/crm/leads/cleanup-test-data · `useUndoAttendanceCheck` → /api/attendance, /api/attendance/${id}/approve, /api/attendance/check · `useUnsavedChanges` → /api/admin/platform-settings, /api/auth/change-required-password, /api/auth/google?state=link_${user?._id} · `useUpsertAttendance` → /api/attendance, /api/attendance/${id}/approve, /api/attendance/check |
 | **Key components** | `AttendanceStatusLegend`, `MonthlyAttendanceGrid`, `SelfMonthlyAttendanceCalendar`, `TeamAttendanceMobileList`, `UnifiedTimeCard` |

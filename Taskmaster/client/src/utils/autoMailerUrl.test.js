@@ -29,9 +29,9 @@ describe('autoMailerUrl', () => {
     expect(buildAutoMailerUrl('/tsc/campaign/abc123')).toBe('https://mailer.example.com/campaigns/abc123');
   });
 
-  it('falls back to production Auto-Mailer UI in production builds', async () => {
+  it('falls back to production Auto-Mailer UI when env unset (incl. local DEV)', async () => {
     import.meta.env.VITE_AUTO_MAILER_URL = '';
-    import.meta.env.DEV = false;
+    import.meta.env.DEV = true;
     const { buildAutoMailerUrl } = await import('./autoMailerUrl.js');
 
     expect(buildAutoMailerUrl('/emails')).toBe('https://auto-mailer-blue.vercel.app');
