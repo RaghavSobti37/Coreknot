@@ -13,8 +13,12 @@ const SESSION_PROBE_TIMEOUT_MS = 12000;
 /**
  * Silent GET /api/auth/session for session bootstrap.
  * Returns 200 { authenticated: false } when logged out — avoids 401 noise in DevTools.
+ * @param {{ timeoutMs?: number }} [options]
  */
-export async function probeAuthSession() {
+export async function probeAuthSession(options = {}) {
+  const timeoutMs = Number(options.timeoutMs) > 0
+    ? Number(options.timeoutMs)
+    : SESSION_PROBE_TIMEOUT_MS;
   const res = await fetchWithTimeout(
     apiPath('/api/auth/session'),
     {
@@ -25,7 +29,7 @@ export async function probeAuthSession() {
         'X-Trace-Id': getClientTraceId(),
       },
     },
-    SESSION_PROBE_TIMEOUT_MS,
+    timeoutMs,
   );
 
   // ponytail: broken Vercel /api proxy returns 404 — treat as logged out, not fatal

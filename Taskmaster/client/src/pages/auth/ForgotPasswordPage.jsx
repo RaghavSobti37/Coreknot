@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { useClerk, useSignIn } from '@clerk/react';
-import axios from 'axios';
+import { useAuth as useClerkAuth, useClerk, useSignIn } from '@clerk/react';
 import { isClerkConfigured } from '../../config/clerk';
 import AuthMarketingShell from '../../components/auth/AuthMarketingShell';
 import { loginCopy } from '../../constants/marketingContent';
@@ -69,12 +68,13 @@ export default function ForgotPasswordPage() {
 function ForgotPasswordWithClerk() {
   const navigate = useNavigate();
   const clerk = useClerk();
+  const { isSignedIn } = useClerkAuth();
   const signInState = useSignIn();
   const { signIn } = signInState;
   const isLoaded = typeof signInState.isLoaded === 'boolean'
     ? signInState.isLoaded
     : Boolean(signIn);
-  const setActive = signInState.setActive || clerk.setActive;
+  const signOut = clerk.signOut;
   const [emailAddress, setEmailAddress] = useState('');
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
@@ -83,9 +83,6 @@ function ForgotPasswordWithClerk() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const [useServerFallback, setUseServerFallback] = useState(false);
-  const [serverToken, setServerToken] = useState('');
-  const [serverResetSent, setServerResetSent] = useState(false);
 
   const needsNewPassword = signIn?.status === 'needs_new_password';
   const busy = submitting || !isLoaded;
@@ -101,14 +98,17 @@ function ForgotPasswordWithClerk() {
   async function sendCode(event) {
     event.preventDefault();
     if (!isLoaded || !signIn) {
-      // Clerk not ready — fall through to server-side
-      setUseServerFallback(true);
+      setError('Auth is still loading. Please wait a moment and try again.');
       return;
     }
     setSubmitting(true);
     setError('');
     setMessage('');
     try {
+      // Active Clerk session fights reset-password create — clear first.
+      if (isSignedIn && typeof signOut === 'function') {
+        await signOut();
+      }
       const createResult = await signIn.create({ identifier: emailAddress.trim() });
       if (createResult?.error) throw createResult.error;
       const sendResult = await signIn.resetPasswordEmailCode.sendCode();
@@ -116,10 +116,7 @@ function ForgotPasswordWithClerk() {
       setCodeSent(true);
       setMessage('We sent a password reset code to your email. Check your inbox and spam folder.');
     } catch (err) {
-      const clerkErr = getClerkErrorMessage(err);
-      // If Clerk can't find the user or the flow fails, offer server-side fallback
-      setError(clerkErr);
-      setUseServerFallback(true);
+      setError(getClerkErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -164,38 +161,11 @@ function ForgotPasswordWithClerk() {
         signOutOfOtherSessions: true,
       });
       if (result?.error) throw result.error;
-      const createdSessionId = result?.createdSessionId || signIn.createdSessionId;
-      if (createdSessionId && setActive) {
-        await setActive({ session: createdSessionId });
-      }
-      setMessage('Password updated! Redirecting to sign in...');
+      // ponytail: no setActive — avoids clerk-establish race; user signs in fresh
+      setMessage('Password updated! Other devices were signed out. Redirecting to sign in...');
       setTimeout(() => navigate('/login', { replace: true }), 1500);
     } catch (err) {
       setError(getClerkErrorMessage(err));
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  /** Server-side reset flow: sends password reset email directly */
-  async function sendServerResetCode(event) {
-    event.preventDefault();
-    if (!emailAddress.trim()) {
-      setError('Please enter your email address.');
-      return;
-    }
-    setSubmitting(true);
-    setError('');
-    setMessage('');
-    try {
-      const { data } = await axios.post('/api/auth/forgot-password', {
-        email: emailAddress.trim(),
-      });
-      setServerResetSent(true);
-      setMessage(data?.message || 'If an account exists with that email, password reset instructions have been sent.');
-    } catch (err) {
-      const message = err?.response?.data?.error || err?.message || 'Could not send reset email. Please try again.';
-      setError(message);
     } finally {
       setSubmitting(false);
     }
@@ -206,12 +176,7 @@ function ForgotPasswordWithClerk() {
       <div className="space-y-4">
         <div className="text-center">
           <p className="text-sm text-teal-100/90">
-            {serverResetSent
-              ? 'Check your email for a password reset link.'
-              : useServerFallback
-                ? 'Enter your email to receive password reset instructions by email.'
-                : 'Enter your account email to receive a reset code, then set a new password.'
-            }
+            Enter your account email to receive a reset code, then set a new password.
           </p>
         </div>
 
@@ -226,20 +191,8 @@ function ForgotPasswordWithClerk() {
           </div>
         ) : null}
 
-        {/* Server-side: reset sent confirmation */}
-        {serverResetSent ? (
-          <div className="space-y-4 text-center">
-            <p className="text-sm text-teal-100/80">
-              The email may take a few minutes to arrive. Check your spam folder if you don&apos;t see it.
-            </p>
-            <Link to="/login" className={`${buttonClass} inline-block w-auto px-6 no-underline`}>
-              Back to sign in
-            </Link>
-          </div>
-        ) : null}
-
         {/* Clerk flow: Step 1 — Send code */}
-        {!codeSent && !serverResetSent && !useServerFallback ? (
+        {!codeSent ? (
           <form className="space-y-3" onSubmit={sendCode}>
             <label className="block text-sm font-medium text-teal-50" htmlFor="reset-email">
               Email address
@@ -260,33 +213,8 @@ function ForgotPasswordWithClerk() {
           </form>
         ) : null}
 
-        {/* Server fallback: Send email directly */}
-        {!codeSent && !serverResetSent && useServerFallback ? (
-          <form className="space-y-3" onSubmit={sendServerResetCode}>
-            <label className="block text-sm font-medium text-teal-50" htmlFor="svr-reset-email">
-              Email address
-            </label>
-            <input
-              id="svr-reset-email"
-              className={inputClass}
-              type="email"
-              autoComplete="email"
-              value={emailAddress}
-              onChange={(event) => setEmailAddress(event.target.value)}
-              required
-              placeholder="you@example.com"
-            />
-            <p className="text-xs text-teal-100/60">
-              You&apos;ll receive an email with a link to reset your password.
-            </p>
-            <button className={buttonClass} type="submit" disabled={submitting || !emailAddress.trim()}>
-              {submitting ? 'Sending...' : 'Send reset link'}
-            </button>
-          </form>
-        ) : null}
-
         {/* Clerk flow: Step 2 — Verify code */}
-        {codeSent && !needsNewPassword && !serverResetSent ? (
+        {codeSent && !needsNewPassword ? (
           <form className="space-y-3" onSubmit={verifyCode}>
             <label className="block text-sm font-medium text-teal-50" htmlFor="reset-code">
               Reset code
@@ -308,7 +236,7 @@ function ForgotPasswordWithClerk() {
         ) : null}
 
         {/* Clerk flow: Step 3 — Set new password */}
-        {needsNewPassword && !serverResetSent ? (
+        {needsNewPassword ? (
           <form className="space-y-3" onSubmit={submitNewPassword}>
             <div>
               <label className="block text-sm font-medium text-teal-50" htmlFor="new-password">
@@ -349,22 +277,6 @@ function ForgotPasswordWithClerk() {
               {busy ? 'Updating password...' : 'Update password'}
             </button>
           </form>
-        ) : null}
-
-        {/* Switch between Clerk and server flow */}
-        {!codeSent && !serverResetSent ? (
-          <div className="text-center pt-1">
-            <button
-              type="button"
-              onClick={() => {
-                setUseServerFallback((prev) => !prev);
-                setError('');
-              }}
-              className="text-xs text-teal-100/60 hover:text-teal-100 underline-offset-2 hover:underline transition-colors"
-            >
-              {useServerFallback ? 'Try using Clerk reset code instead' : 'Having trouble? Use email link instead'}
-            </button>
-          </div>
         ) : null}
       </div>
     </AuthMarketingShell>

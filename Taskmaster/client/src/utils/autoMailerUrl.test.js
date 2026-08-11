@@ -1,10 +1,11 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 
 describe('autoMailerUrl', () => {
   const envBackup = { ...import.meta.env };
 
   afterEach(() => {
     Object.assign(import.meta.env, envBackup);
+    vi.resetModules();
   });
 
   it('maps CoreKnot email authoring paths to Auto-Mailer routes', async () => {
@@ -32,8 +33,30 @@ describe('autoMailerUrl', () => {
   it('falls back to production Auto-Mailer UI when env unset (incl. local DEV)', async () => {
     import.meta.env.VITE_AUTO_MAILER_URL = '';
     import.meta.env.DEV = true;
+    import.meta.env.PROD = false;
     const { buildAutoMailerUrl } = await import('./autoMailerUrl.js');
 
     expect(buildAutoMailerUrl('/emails')).toBe('https://auto-mailer-blue.vercel.app');
+  });
+
+  it('ignores localhost VITE_AUTO_MAILER_URL in PROD builds', async () => {
+    import.meta.env.VITE_AUTO_MAILER_URL = 'http://localhost:5001';
+    import.meta.env.PROD = true;
+    import.meta.env.DEV = false;
+    vi.resetModules();
+    const { buildAutoMailerUrl, getAutoMailerOrigin } = await import('./autoMailerUrl.js');
+
+    expect(getAutoMailerOrigin()).toBe('https://auto-mailer-blue.vercel.app');
+    expect(buildAutoMailerUrl('/emails')).toBe('https://auto-mailer-blue.vercel.app');
+  });
+
+  it('allows localhost VITE_AUTO_MAILER_URL in DEV', async () => {
+    import.meta.env.VITE_AUTO_MAILER_URL = 'http://localhost:5001';
+    import.meta.env.PROD = false;
+    import.meta.env.DEV = true;
+    vi.resetModules();
+    const { getAutoMailerOrigin } = await import('./autoMailerUrl.js');
+
+    expect(getAutoMailerOrigin()).toBe('http://localhost:5001');
   });
 });

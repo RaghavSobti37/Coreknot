@@ -4,7 +4,7 @@ import { useAuth as useClerkAuth, useClerk } from '@clerk/react';
 import { isClerkConfigured } from '../../config/clerk';
 import { isAuthSite } from '../../config/siteMode';
 import { useAuth } from '../../contexts/AuthContext';
-import { isClerkAuthSubflowPath, resolveClerkAuthPathname } from '../../lib/clerkSignInFlow';
+import { isAuthHoldPath, resolveClerkAuthPathname } from '../../lib/clerkSignInFlow';
 import { shouldSignOutStaleClerkSession } from '../../lib/clerkStaleSession';
 
 /**
@@ -28,7 +28,7 @@ function ClerkStaleSessionRecoveryInner() {
     if (!isLoaded || !isSignedIn || !sessionId) return undefined;
 
     const authPath = resolveClerkAuthPathname(location.pathname);
-    if (isClerkAuthSubflowPath(authPath)) return undefined;
+    if (isAuthHoldPath(authPath)) return undefined;
     if (user && sessionReady) return undefined;
 
     const key = `${sessionId}:${authPath}`;

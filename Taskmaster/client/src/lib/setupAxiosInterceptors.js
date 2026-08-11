@@ -55,6 +55,9 @@ const normalizeProjectsInResponse = (url, data) => {
 /** Register global axios interceptors (deferred from App mount to shrink initial JS). */
 export function setupAxiosInterceptors() {
   void loadOrgFirstAuthConfig();
+  if (!axios.defaults.timeout) {
+    axios.defaults.timeout = 15000;
+  }
 
   const reqInterceptor = axios.interceptors.request.use((config) => {
     if (!config.headers['X-Trace-Id'] && !config.headers['x-trace-id']) {

@@ -12,7 +12,7 @@ import {
 import { getAxiosBaseURL } from '../utils/apiBase';
 import { isStandaloneDisplay } from '../utils/displayMode';
 import { markForceLogout, consumeForceLogout } from '../utils/authSession';
-import { refetchUserScopedQueries } from '../lib/queryInvalidation';
+import { refetchUserScopedQueries, refetchPostLoginQueries } from '../lib/queryInvalidation';
 import { runClerkSignOut } from '../lib/clerkLogoutRegistry';
 import { mergeSessionUser } from '../utils/sessionUserMerge';
 import { enrichUserDepartment } from '../utils/enrichUserDepartment';
@@ -44,7 +44,7 @@ const defaultAuthContext = {
 
 const AuthContext = createContext(defaultAuthContext);
 
-/** Marketing/legal routes — defer session probe so LCP is not blocked. */
+/** Marketing/legal/auth routes — defer session probe so LCP / SignIn are not blocked. */
 const PUBLIC_MARKETING_PATHS = new Set([
   '/',
   '/login',
@@ -58,36 +58,26 @@ const PUBLIC_MARKETING_PATHS = new Set([
   '/unsubscribe',
 ]);
 
-/** Auth routes need an immediate session probe so stale cookies redirect before login submit. */
-const IMMEDIATE_SESSION_PROBE_PATHS = new Set([
-  '/login',
-  '/login/choose',
-  '/register',
-  '/forgot-password',
-  '/reset-password',
-]);
+/** Empty: auth routes defer probe (idle). Protected routes still probe immediately. */
+const IMMEDIATE_SESSION_PROBE_PATHS = new Set([]);
 
 const SESSION_RETRIES = 3;
+const ESTABLISH_COOKIE_VERIFY_TIMEOUT_MS = 3000;
 
-/** Retry session probe until HttpOnly cookie from clerk-establish is visible. */
-async function verifyEstablishedSessionCookie(expectedUserId, isCancelled, maxAttempts = 4) {
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    if (isCancelled()) return null;
-    if (attempt > 0) {
-      await new Promise((resolve) => setTimeout(resolve, 150 * attempt));
+/** One short cookie check after clerk-establish; trust establish body if probe lags. */
+async function verifyEstablishedSessionCookie(expectedUserId, isCancelled) {
+  if (isCancelled()) return null;
+  try {
+    const probe = await probeAuthSession({ timeoutMs: ESTABLISH_COOKIE_VERIFY_TIMEOUT_MS });
+    if (
+      probe.status === 200
+      && probe.user?._id
+      && String(probe.user._id) === String(expectedUserId)
+    ) {
+      return probe.user;
     }
-    try {
-      const probe = await probeAuthSession();
-      if (
-        probe.status === 200
-        && probe.user?._id
-        && String(probe.user._id) === String(expectedUserId)
-      ) {
-        return probe.user;
-      }
-    } catch {
-      /* retry */
-    }
+  } catch {
+    /* trust establish payload */
   }
   return null;
 }
@@ -99,6 +89,9 @@ const applyAxiosBaseURL = () => {
 
 applyAxiosBaseURL();
 axios.defaults.withCredentials = true;
+if (!axios.defaults.timeout) {
+  axios.defaults.timeout = 15000;
+}
 
 export function userSessionChanged(prev, next) {
   if (!prev && !next) return false;
@@ -390,7 +383,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     setSessionReady(true);
-    refetchUserScopedQueries(queryClient);
+    refetchPostLoginQueries(queryClient);
   }, [fetchUser, queryClient]);
 
   const applySessionUser = useCallback((nextUser) => {
@@ -429,21 +422,14 @@ export const AuthProvider = ({ children }) => {
 
     const isCancelled = () => epoch !== authEpochRef.current;
 
-    let verifiedUser = await verifyEstablishedSessionCookie(
+    // Trust establish body; optional ≤3s cookie check (no multi-retry waterfall).
+    const cookieUser = await verifyEstablishedSessionCookie(
       sessionUser._id,
       isCancelled,
     );
-    if (!verifiedUser) {
-      const fallback = await fetchUser({
-        clearOn401: true,
-        retries: 2,
-        forceFresh: true,
-      });
-      if (!fallback?._id || isCancelled()) {
-        throw new Error('Session could not be established. Please try again.');
-      }
-      verifiedUser = fallback;
-    }
+    if (isCancelled()) return;
+
+    const verifiedUser = cookieUser || sessionUser;
 
     const enriched = await enrichUserDepartment(verifiedUser).catch(() => verifiedUser);
     if (isCancelled()) return;
@@ -459,8 +445,8 @@ export const AuthProvider = ({ children }) => {
     recordAttendanceSessionLogin();
     setLoading(false);
     setSessionReady(true);
-    refetchUserScopedQueries(queryClient);
-  }, [fetchUser, queryClient]);
+    refetchPostLoginQueries(queryClient);
+  }, [queryClient]);
 
   const retryBoot = useCallback(() => {
     loggingOutRef.current = false;

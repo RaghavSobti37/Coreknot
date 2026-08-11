@@ -174,7 +174,7 @@ function ClerkSessionBridgeInner() {
                 ? { organizationId: establishOrgId }
                 : (orgId ? { organizationId: orgId } : {})),
             },
-            { withCredentials: true, ...AXIOS_SKIP_TOAST },
+            { withCredentials: true, timeout: 10000, ...AXIOS_SKIP_TOAST },
           );
         } catch (err) {
           const status = err?.response?.status;

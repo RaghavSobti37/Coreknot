@@ -32,7 +32,11 @@ export function triggerUnauthorized(error) {
   if (handlingUnauthorized) return;
   const url = (error?.config?.url || '').split('?')[0];
   if (url.includes('/api/auth/')) return;
-  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/login')) return;
+  if (typeof window !== 'undefined') {
+    const path = window.location.pathname || '';
+    if (path.startsWith('/login')) return;
+    if (path.startsWith('/forgot-password') || path.startsWith('/reset-password')) return;
+  }
 
   handlingUnauthorized = true;
   saveAuthReturnPath();

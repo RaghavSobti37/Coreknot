@@ -14,6 +14,12 @@ const PENDING_AUTH_SEGMENTS = new Set([
 
 const AUTH_ROUTE_PREFIXES = ['/login', '/register'];
 
+/** Standalone password-reset routes — no clerk-establish / stale signOut. */
+const AUTH_HOLD_PATHS = new Set([
+  '/forgot-password',
+  '/reset-password',
+]);
+
 /**
  * Clerk path routing can update the browser URL before React Router pathname catches up.
  * Prefer the more specific /login/* or /register/* segment when both are available.
@@ -46,6 +52,14 @@ export function isClerkAuthSubflowPath(pathname) {
   return PENDING_AUTH_SEGMENTS.has(match[1]);
 }
 
+/** Forgot/reset + Clerk SignIn/SignUp subflows — hold establish and stale recovery. */
+export function isAuthHoldPath(pathname) {
+  const path = String(pathname || '').split('?')[0];
+  if (AUTH_HOLD_PATHS.has(path)) return true;
+  if ([...AUTH_HOLD_PATHS].some((p) => path.startsWith(`${p}/`))) return true;
+  return isClerkAuthSubflowPath(path);
+}
+
 /** @deprecated use isClerkAuthSubflowPath */
 export function isClerkSignInSubflowPath(pathname) {
   return isClerkAuthSubflowPath(pathname);
@@ -59,7 +73,7 @@ export function isClerkReadyForCoreKnotEstablish({
   sessionId,
 }) {
   if (!isLoaded || !isSignedIn || !sessionId) return false;
-  if (isClerkAuthSubflowPath(pathname)) return false;
+  if (isAuthHoldPath(pathname)) return false;
   return true;
 }
 
@@ -86,7 +100,7 @@ export function computeLoginUiState({
 
   const authPath = resolveClerkAuthPathname(pathname);
 
-  if (isClerkAuthSubflowPath(authPath)) {
+  if (isAuthHoldPath(authPath) || isClerkAuthSubflowPath(authPath)) {
     return 'SHOW_SIGN_IN';
   }
 

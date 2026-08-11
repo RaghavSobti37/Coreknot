@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   computeLoginUiState,
+  isAuthHoldPath,
   isClerkAuthSubflowPath,
   isClerkReadyForCoreKnotEstablish,
   isClerkSignInSubflowPath,
@@ -16,6 +17,22 @@ describe('clerkSignInFlow', () => {
     expect(isClerkSignInSubflowPath('/login')).toBe(false);
     expect(isClerkSignInSubflowPath('/login/')).toBe(false);
     expect(isClerkAuthSubflowPath('/register')).toBe(false);
+  });
+
+  it('treats forgot/reset password as auth hold paths', () => {
+    expect(isAuthHoldPath('/forgot-password')).toBe(true);
+    expect(isAuthHoldPath('/reset-password')).toBe(true);
+    expect(isAuthHoldPath('/login/reset-password')).toBe(true);
+    expect(isAuthHoldPath('/dashboard')).toBe(false);
+  });
+
+  it('blocks establish on forgot-password even when signed in', () => {
+    expect(isClerkReadyForCoreKnotEstablish({
+      pathname: '/forgot-password',
+      isLoaded: true,
+      isSignedIn: true,
+      sessionId: 'sess_1',
+    })).toBe(false);
   });
 
   it('prefers browser pathname when router lags on subflow', () => {

@@ -72,3 +72,14 @@ export function refetchUserScopedQueries(queryClient) {
     queryClient.invalidateQueries({ queryKey });
   });
 }
+
+/** Post clerk-establish / login — dashboard mounts fetch the rest; avoid API stampede. */
+export function refetchPostLoginQueries(queryClient) {
+  queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] });
+  queryClient.invalidateQueries({ queryKey: ['tasks'] });
+  invalidateStatusCounts(queryClient);
+  queryClient.invalidateQueries({
+    predicate: (query) =>
+      Array.isArray(query.queryKey) && query.queryKey[0] === 'notifications',
+  });
+}

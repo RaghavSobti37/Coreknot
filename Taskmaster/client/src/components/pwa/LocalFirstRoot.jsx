@@ -17,22 +17,38 @@ export default function LocalFirstRoot({ children }) {
   }, []);
 
   useEffect(() => {
-    const updateSW = registerSW({
-      immediate: true,
-      onNeedRefresh() {
-        setNeedRefresh(() => updateSW);
-      },
-      onOfflineReady() {
-        setOfflineReady(true);
-        markChunkRecoveryComplete();
-      },
-      onRegisteredSW(_swUrl, registration) {
-        markChunkRecoveryComplete();
-        registration?.active?.addEventListener?.('error', (event) => {
-          console.error('[sw] runtime error', event?.message);
-        });
-      },
-    });
+    const scheduleRegister = () => {
+      const updateSW = registerSW({
+        immediate: false,
+        onNeedRefresh() {
+          setNeedRefresh(() => updateSW);
+        },
+        onOfflineReady() {
+          setOfflineReady(true);
+          markChunkRecoveryComplete();
+        },
+        onRegisteredSW(_swUrl, registration) {
+          markChunkRecoveryComplete();
+          registration?.active?.addEventListener?.('error', (event) => {
+            console.error('[sw] runtime error', event?.message);
+          });
+        },
+      });
+    };
+
+    let idleId;
+    let timeoutId;
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      idleId = window.requestIdleCallback(scheduleRegister, { timeout: 4000 });
+    } else {
+      timeoutId = window.setTimeout(scheduleRegister, 1500);
+    }
+    return () => {
+      if (idleId != null && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId != null) window.clearTimeout(timeoutId);
+    };
   }, []);
 
   const connect = async () => connectSyncEngine();

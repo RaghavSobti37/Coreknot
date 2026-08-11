@@ -9,7 +9,9 @@ const mockSendCode = vi.fn();
 const mockVerifyCode = vi.fn();
 const mockSubmitPassword = vi.fn();
 const mockSetActive = vi.fn();
+const mockSignOut = vi.fn();
 const mockUseSignIn = vi.fn();
+const mockUseClerkAuth = vi.fn();
 
 const signInState = {
   status: 'needs_identifier',
@@ -23,7 +25,8 @@ const signInState = {
 };
 
 vi.mock('@clerk/react', () => ({
-  useClerk: () => ({ setActive: mockSetActive }),
+  useClerk: () => ({ setActive: mockSetActive, signOut: mockSignOut }),
+  useAuth: () => mockUseClerkAuth(),
   useSignIn: () => mockUseSignIn(),
 }));
 
@@ -61,6 +64,8 @@ describe('ForgotPasswordPage', () => {
     mockVerifyCode.mockResolvedValue({});
     mockSubmitPassword.mockResolvedValue({});
     mockSetActive.mockResolvedValue(undefined);
+    mockSignOut.mockResolvedValue(undefined);
+    mockUseClerkAuth.mockReturnValue({ isSignedIn: false });
     mockUseSignIn.mockReturnValue({
       isLoaded: true,
       signIn: signInState,
@@ -83,6 +88,20 @@ describe('ForgotPasswordPage', () => {
     expect(screen.getByLabelText(/reset code/i)).toBeInTheDocument();
   });
 
+  it('signs out an existing Clerk session before starting reset', async () => {
+    const user = userEvent.setup();
+    mockUseClerkAuth.mockReturnValue({ isSignedIn: true });
+    renderPage();
+
+    await user.type(screen.getByLabelText(/email address/i), 'person@example.com');
+    await user.click(screen.getByRole('button', { name: /send reset code/i }));
+
+    await waitFor(() => {
+      expect(mockSignOut).toHaveBeenCalled();
+      expect(mockCreate).toHaveBeenCalled();
+    });
+  });
+
   it('shows Clerk long_message errors from the frontend API', async () => {
     const user = userEvent.setup();
     mockSendCode.mockRejectedValue({
@@ -103,6 +122,7 @@ describe('ForgotPasswordPage', () => {
     expect(await screen.findByText(/you are not authorized to perform this request/i)).toBeInTheDocument();
     expect(screen.getByText(/authorization_invalid/i)).toBeInTheDocument();
     expect(screen.getByText(/b2cbf0cd14be5f430240acb49433a602/i)).toBeInTheDocument();
+    expect(screen.queryByText(/use email link instead/i)).not.toBeInTheDocument();
   });
 
   it('supports Clerk signal-style sign-in state without isLoaded', async () => {
@@ -143,7 +163,7 @@ describe('ForgotPasswordPage', () => {
     expect(mockSubmitPassword).not.toHaveBeenCalled();
   });
 
-  it('updates the password and activates the Clerk session', async () => {
+  it('updates the password without activating a Clerk session', async () => {
     const user = userEvent.setup();
     signInState.status = 'needs_new_password';
     signInState.createdSessionId = 'sess_reset';
@@ -159,7 +179,8 @@ describe('ForgotPasswordPage', () => {
         password: 'New-password-1',
         signOutOfOtherSessions: true,
       });
-      expect(mockSetActive).toHaveBeenCalledWith({ session: 'sess_reset' });
     });
+    expect(mockSetActive).not.toHaveBeenCalled();
+    expect(await screen.findByText(/password updated/i)).toBeInTheDocument();
   });
 });
