@@ -1188,19 +1188,18 @@
     "routes": [
       "/forgot-password"
     ],
-    "lines": 373,
+    "lines": 285,
     "defaultExport": "function",
     "namedExports": [],
     "hooks": [
       "useClerk",
+      "useClerkAuth",
       "useMemo",
       "useNavigate",
       "useSignIn",
       "useState"
     ],
-    "apis": [
-      "/api/auth/forgot-password"
-    ],
+    "apis": [],
     "components": [
       "AuthMarketingShell"
     ]
@@ -1208,7 +1207,7 @@
   {
     "file": "Taskmaster/client/src/pages/auth/ForgotPasswordPage.test.jsx",
     "routes": [],
-    "lines": 166,
+    "lines": 187,
     "defaultExport": null,
     "namedExports": [],
     "hooks": [],

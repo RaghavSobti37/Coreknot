@@ -1,7 +1,7 @@
 # CoreKnot — Master Reference
 
 > **Canonical product bible.** Every routed page, APIs, hooks, exports, and access rules.  
-> **Product:** CoreKnot · **Repo:** `coreknot/Taskmaster` · **Version:** 1.0.8-beta.3 · **Compiled:** 2026-07-29
+> **Product:** CoreKnot · **Repo:** `coreknot/Taskmaster` · **Version:** 1.0.8-beta.3 · **Compiled:** 2026-08-11
 
 ---
 
@@ -201,21 +201,19 @@ _Total page files: 144. Each entry lists route, exports, hooks, components, and 
 | --- | --- |
 | **Route(s)** | /forgot-password |
 | **Default export** | `function` |
-| **Lines** | 373 |
-| **Hooks** | `useClerk`, `useMemo`, `useNavigate`, `useSignIn`, `useState` |
-| **Data hooks** | `useClerk` → /api/auth/clerk-establish, /api/auth/forgot-password, /api/tenants/memberships · `useSignIn` → /api/auth/forgot-password |
+| **Lines** | 285 |
+| **Hooks** | `useClerk`, `useClerkAuth`, `useMemo`, `useNavigate`, `useSignIn`, `useState` |
+| **Data hooks** | `useClerk` → /api/auth/clerk-establish, /api/tenants/memberships, /api/tenants/select · `useClerkAuth` → /api/auth/access-request, /api/auth/clerk-establish, /api/tenants/memberships |
 | **Key components** | `AuthMarketingShell` |
 
-**API endpoints:**
-
-- `/api/auth/forgot-password`
+_No direct `/api/...` string literals — data via shared hooks (e.g. `useTaskmasterQueries`) or parent hub._
 #### `Taskmaster/client/src/pages/auth/ForgotPasswordPage.test.jsx`
 
 | Field | Value |
 | --- | --- |
 | **Route(s)** | _embedded tab / child route_ |
 | **Default export** | `—` |
-| **Lines** | 166 |
+| **Lines** | 187 |
 
 _No direct `/api/...` string literals — data via shared hooks (e.g. `useTaskmasterQueries`) or parent hub._
 #### `Taskmaster/client/src/pages/auth/GoogleSuccessPage.jsx`
@@ -261,7 +259,7 @@ _No direct `/api/...` string literals — data via shared hooks (e.g. `useTaskma
 | **Default export** | `function` |
 | **Lines** | 142 |
 | **Hooks** | `useAuth`, `useCallback`, `useClerk`, `useClerkAuth`, `useEffect`, `useNavigate`, `useQueryClient`, `useRef`, `useState` |
-| **Data hooks** | `useAuth` → /api/artists/${artistId}, /api/artists/${artistId}/claim, /api/artists/${artistId}/members · `useClerk` → /api/auth/clerk-establish, /api/auth/forgot-password, /api/tenants/memberships · `useClerkAuth` → /api/auth/access-request, /api/auth/clerk-establish, /api/tenants/memberships |
+| **Data hooks** | `useAuth` → /api/artists/${artistId}, /api/artists/${artistId}/claim, /api/artists/${artistId}/members · `useClerk` → /api/auth/clerk-establish, /api/tenants/memberships, /api/tenants/select · `useClerkAuth` → /api/auth/access-request, /api/auth/clerk-establish, /api/tenants/memberships |
 | **Key components** | `AuthMarketingShell`, `BootScreen` |
 
 _No direct `/api/...` string literals — data via shared hooks (e.g. `useTaskmasterQueries`) or parent hub._

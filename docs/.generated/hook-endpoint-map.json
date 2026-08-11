@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-29",
+  "generatedAt": "2026-08-11",
   "hooks": {
     "useAcceptArtistMembership": {
       "files": [
@@ -1886,18 +1886,10 @@
             "/api/tenants/select"
           ],
           "network": true
-        },
-        {
-          "file": "Taskmaster/client/src/pages/auth/ForgotPasswordPage.jsx",
-          "endpoints": [
-            "/api/auth/forgot-password"
-          ],
-          "network": true
         }
       ],
       "endpoints": [
         "/api/auth/clerk-establish",
-        "/api/auth/forgot-password",
         "/api/tenants/memberships",
         "/api/tenants/select"
       ],
@@ -5259,21 +5251,6 @@
       "endpoints": [
         "/api/customization/shortcuts",
         "/api/customization/shortcuts/reset"
-      ],
-      "network": true
-    },
-    "useSignIn": {
-      "files": [
-        {
-          "file": "Taskmaster/client/src/pages/auth/ForgotPasswordPage.jsx",
-          "endpoints": [
-            "/api/auth/forgot-password"
-          ],
-          "network": true
-        }
-      ],
-      "endpoints": [
-        "/api/auth/forgot-password"
       ],
       "network": true
     },
