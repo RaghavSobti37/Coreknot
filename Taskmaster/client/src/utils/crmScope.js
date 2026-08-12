@@ -48,11 +48,9 @@ export function crmRestrictsToOwnLeads() {
   return false;
 }
 
-export function crmQueryParamsForUser(user, extra = {}) {
-  // Admin and Akash browse both CRM segments — no crmType filter from the client.
-  if ((isAdminUser(user) || isAllCrmScopeUser(user)) && !extra.crmType) {
-    return { ...extra };
-  }
-  const crmType = extra.crmType || resolveClientCrmType(user);
-  return { ...extra, crmType };
+export function crmQueryParamsForUser(_user, extra = {}) {
+  // Shared CRM — never inject crmType. List shows artist + academy for everyone.
+  const next = { ...extra };
+  delete next.crmType;
+  return next;
 }

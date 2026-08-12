@@ -459,20 +459,19 @@ export default function LeadsPage() {
   const primaryLeadsReady = !isLoading;
   const deferCrmSecondary = useDeferredQueryEnabled(primaryLeadsReady, { tier: 0 });
   const deferCrmTertiary = useDeferredQueryEnabled(primaryLeadsReady, { tier: 1 });
-  const statsParams = useMemo(() => (artistMode ? { crmType: 'artist' } : {}), [artistMode]);
+  const statsParams = useMemo(() => ({}), []);
   const { data: statsData } = useCRMStats(deferCrmSecondary, { queryParams: statsParams });
   const { data: salesTeam = [] } = useSalesReps(deferCrmSecondary);
   const { data: artistTeam = [] } = useArtistReps(deferCrmSecondary);
   const { data: artistImportSheets = [] } = useArtistImportSheets(artistCrmView && deferCrmTertiary);
   const filterTeam = useMemo(() => {
-    if (artistMode) return artistTeam;
     const byId = new Map();
     for (const rep of [...salesTeam, ...artistTeam]) {
       if (rep?._id) byId.set(String(rep._id), rep);
     }
     return [...byId.values()].sort((a, b) =>
       String(a.name || '').localeCompare(String(b.name || '')));
-  }, [artistMode, salesTeam, artistTeam]);
+  }, [salesTeam, artistTeam]);
   // Akash owns every pipeline — always offer the full rep list (artist + academy).
   const assignTeam = isAllCrmScopeUser(user) ? filterTeam : (artistRepContext || artistMode ? artistTeam : filterTeam);
   const { data: crmConfig } = useCRMConfig(deferCrmSecondary);
@@ -780,17 +779,6 @@ export default function LeadsPage() {
       )
     },
     {
-      header: 'Created',
-      sortKey: 'createdAt',
-      mobileHidden: true,
-      sortFn: (row) => (row.createdAt ? new Date(row.createdAt) : null),
-      render: (row) => (
-        <span className="text-[10px] font-mono text-[var(--color-text-muted)]">
-          {row.createdAt ? formatDisplayDate(new Date(row.createdAt)) : '—'}
-        </span>
-      ),
-    },
-    {
       header: artistMode ? 'Assigned Manager' : 'Assigned Agent',
       sortKey: 'assignedRepName',
       render: (row) => (
@@ -1089,8 +1077,13 @@ export default function LeadsPage() {
               {selectedLead?.unsubscribed && (
                 <StatusBadge status="error" className="w-fit">Unsubscribed</StatusBadge>
               )}
+              <p className="text-[10px] font-mono text-[var(--color-text-muted)] pt-1 border-t border-[var(--color-bg-border)]">
+                Created {(detailLead?.createdAt || selectedLead?.createdAt)
+                  ? formatDisplayDateTime(new Date(detailLead?.createdAt || selectedLead.createdAt))
+                  : '—'}
+              </p>
               {editLeadData.nextFollowupDate && (
-                <p className="text-[10px] font-mono text-blue-400 flex items-center gap-1.5 pt-1 border-t border-[var(--color-bg-border)]">
+                <p className="text-[10px] font-mono text-blue-400 flex items-center gap-1.5">
                   <Clock size={12} />
                   Follow-up {formatDateKeyForDisplay(editLeadData.nextFollowupDate)} {editLeadData.nextFollowupTime}
                 </p>

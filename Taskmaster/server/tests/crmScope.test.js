@@ -30,80 +30,28 @@ describe('crmScope', () => {
     departmentId: { slug: 'admin', permissionPreset: 'admin' },
   };
 
-  it('artist-management sees all artist CRM leads (shared team)', () => {
-    expect(resolveCrmScope(artistUser)).toEqual({
-      crmType: CRM_TYPES.ARTIST,
-      restrictToOwn: false,
-    });
-
-    const query = {};
-    applyCrmScopeToQuery(query, artistUser);
-    expect(query).toEqual({
-      crmType: CRM_TYPES.ARTIST,
-    });
-    expect(query.assignedRepId).toBeUndefined();
+  it('everyone with CRM access sees every lead — no crmType or own-rep filter', () => {
+    for (const user of [artistUser, salesUser, adminUser, akashUser, otherArtistUser]) {
+      expect(resolveCrmScope(user)).toEqual({
+        crmType: null,
+        restrictToOwn: false,
+      });
+      const query = {};
+      applyCrmScopeToQuery(query, user, { crmType: CRM_TYPES.ARTIST });
+      expect(query).toEqual({});
+      expect(query.assignedRepId).toBeUndefined();
+    }
   });
 
-  it('artist-management may mutate any artist lead; sales/academy may not', () => {
+  it('artist-management may mutate any lead; sales/academy may not', () => {
     expect(shouldRestrictCrmMutationsToOwn(artistUser)).toBe(false);
     expect(shouldRestrictCrmMutationsToOwn(salesUser)).toBe(true);
     expect(shouldRestrictCrmMutationsToOwn(adminUser)).toBe(false);
   });
 
-  it('sales/academy reps see only assigned sales pipeline leads', () => {
-    expect(resolveCrmScope(salesUser)).toEqual({
-      crmType: CRM_TYPES.SALES,
-      restrictToOwn: true,
-    });
-
-    const query = {};
-    applyCrmScopeToQuery(query, salesUser);
-    expect(String(query.assignedRepId)).toBe(salesUser._id);
-    expect(query.$and).toEqual([{
-      $or: [
-        { crmType: CRM_TYPES.SALES },
-        { crmType: { $exists: false } },
-        { crmType: null },
-        { crmType: '' },
-      ],
-    }]);
-  });
-
-  it('admin can browse both CRM segments without rep filter', () => {
-    expect(resolveCrmScope(adminUser, CRM_TYPES.ARTIST)).toEqual({
-      crmType: CRM_TYPES.ARTIST,
-      restrictToOwn: false,
-    });
-
-    const query = {};
-    applyCrmScopeToQuery(query, adminUser, { crmType: CRM_TYPES.ARTIST });
-    expect(query).toEqual({ crmType: CRM_TYPES.ARTIST });
-  });
-
-  it('Akash (artist-management) is the all-CRM owner — sees every lead, no rep filter', () => {
+  it('Akash is still recognized as the all-CRM owner', () => {
     expect(isAkashUser(akashUser)).toBe(true);
-    expect(resolveCrmScope(akashUser)).toEqual({
-      crmType: null,
-      restrictToOwn: false,
-    });
-    // Ignores any crmType the client may send (stale bundles pass crmType=artist).
-    expect(resolveCrmScope(akashUser, CRM_TYPES.ARTIST)).toEqual({
-      crmType: null,
-      restrictToOwn: false,
-    });
-
-    const query = {};
-    applyCrmScopeToQuery(query, akashUser, { crmType: CRM_TYPES.ARTIST });
-    expect(query).toEqual({});
-    expect(query.assignedRepId).toBeUndefined();
-    expect(shouldRestrictCrmMutationsToOwn(akashUser)).toBe(false);
-  });
-
-  it('other artist-management users stay artist-scoped (only Akash unlocks all CRM)', () => {
     expect(isAkashUser(otherArtistUser)).toBe(false);
-    expect(resolveCrmScope(otherArtistUser)).toEqual({
-      crmType: CRM_TYPES.ARTIST,
-      restrictToOwn: false,
-    });
+    expect(shouldRestrictCrmMutationsToOwn(akashUser)).toBe(false);
   });
 });

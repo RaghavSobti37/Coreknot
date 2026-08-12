@@ -606,10 +606,10 @@ _No direct `/api/...` string literals — data via shared hooks (e.g. `useTaskma
 | --- | --- |
 | **Route(s)** | (tab: followups) |
 | **Default export** | `function` |
-| **Lines** | 814 |
+| **Lines** | 816 |
 | **Hooks** | `useAuth`, `useCRMConfig`, `useCallback`, `useConfirm`, `useDeferredQueryEnabled`, `useEffect`, `useLiveLeads`, `useMemo`, `useQueryClient`, `useSalesReps`, `useSearchParams`, `useState`, `useToast`, `useUpdateLead` |
 | **Data hooks** | `useAuth` → /api/artists/${artistId}, /api/artists/${artistId}/claim, /api/artists/${artistId}/members · `useCRMConfig` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useConfirm` → /api/contacts, /api/contacts/${editingContact._id}, /api/contacts/${id} · `useDeferredQueryEnabled` → /api/admin/media-contacts, /api/admin/media-contacts/filters, /api/admin/platform-settings · `useLiveLeads` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useSalesReps` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useSearchParams` → /api/auth/google?state=link_${user?._id}, /api/auth/reset-password, /api/crm/leads/${highlightId} · `useToast` → /api/admin/platform-settings, /api/admin/tenants, /api/admin/tenants/${tenant._id} · `useUpdateLead` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports |
-| **Key components** | `ArtistBookingEnquiryPanel`, `LeadLockIndicator`, `PhoneNumberFields` |
+| **Key components** | `ArtistBookingEnquiryPanel`, `LeadLockIndicator`, `LeadTypeTagBadge`, `PhoneNumberFields` |
 
 **API endpoints:**
 
@@ -622,10 +622,10 @@ _No direct `/api/...` string literals — data via shared hooks (e.g. `useTaskma
 | --- | --- |
 | **Route(s)** | (tab: leads) |
 | **Default export** | `function` |
-| **Lines** | 1423 |
+| **Lines** | 1416 |
 | **Hooks** | `useArtistImportSheets`, `useArtistReps`, `useAuth`, `useCRMConfig`, `useCRMStats`, `useCallback`, `useConfirm`, `useCreateLead`, `useDebounce`, `useDeferredQueryEnabled`, `useEffect`, `useLeadDetail`, `useLiveLeads`, `useMemo`, `useQueryClient`, `useRef`, `useSalesReps`, `useSearchParams`, `useState`, `useToast`, `useUnsavedChanges`, `useUpdateLead` |
 | **Data hooks** | `useArtistImportSheets` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useArtistReps` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useAuth` → /api/artists/${artistId}, /api/artists/${artistId}/claim, /api/artists/${artistId}/members · `useCRMConfig` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useCRMStats` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useConfirm` → /api/contacts, /api/contacts/${editingContact._id}, /api/contacts/${id} · `useCreateLead` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useDebounce` → /api/crm/leads/${highlightId}, /api/crm/leads/${id}, /api/crm/leads/${leadId}/audit · `useDeferredQueryEnabled` → /api/admin/media-contacts, /api/admin/media-contacts/filters, /api/admin/platform-settings · `useLeadDetail` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useLiveLeads` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useSalesReps` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useSearchParams` → /api/auth/google?state=link_${user?._id}, /api/auth/reset-password, /api/crm/leads/${highlightId} · `useToast` → /api/admin/platform-settings, /api/admin/tenants, /api/admin/tenants/${tenant._id} · `useUnsavedChanges` → /api/admin/platform-settings, /api/auth/change-required-password, /api/auth/google?state=link_${user?._id} · `useUpdateLead` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports |
-| **Key components** | `ArtistBookingEnquiryPanel`, `ArtistCrmImportPanel`, `LeadArtistJourneySection`, `LeadLockIndicator`, `LeadRowActions`, `PhoneNumberFields` |
+| **Key components** | `ArtistBookingEnquiryPanel`, `ArtistCrmImportPanel`, `LeadArtistJourneySection`, `LeadLockIndicator`, `LeadRowActions`, `LeadTypeTagBadge`, `PhoneNumberFields` |
 
 **API endpoints:**
 

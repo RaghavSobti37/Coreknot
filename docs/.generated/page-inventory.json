@@ -1419,7 +1419,7 @@
     "routes": [
       "(tab: followups)"
     ],
-    "lines": 814,
+    "lines": 816,
     "defaultExport": "function",
     "namedExports": [],
     "hooks": [
@@ -1446,6 +1446,7 @@
     "components": [
       "ArtistBookingEnquiryPanel",
       "LeadLockIndicator",
+      "LeadTypeTagBadge",
       "PhoneNumberFields"
     ]
   },
@@ -1454,7 +1455,7 @@
     "routes": [
       "(tab: leads)"
     ],
-    "lines": 1423,
+    "lines": 1416,
     "defaultExport": "function",
     "namedExports": [],
     "hooks": [
@@ -1494,6 +1495,7 @@
       "LeadArtistJourneySection",
       "LeadLockIndicator",
       "LeadRowActions",
+      "LeadTypeTagBadge",
       "PhoneNumberFields"
     ]
   },

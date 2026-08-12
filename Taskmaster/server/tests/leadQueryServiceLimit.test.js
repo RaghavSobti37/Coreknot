@@ -13,19 +13,19 @@ describe('leadQueryService list limits', () => {
     expect(pipeline).toContainEqual({ $limit: 100 });
   });
 
-  it('does not let non-admin users override own-lead scope with assignedRepId', () => {
+  it('lets any CRM user filter the shared pipeline by assignedRepId', () => {
     const user = {
       _id: '507f1f77bcf86cd799439012',
       departmentId: { slug: 'sales' },
     };
-    const query = buildLeadListQuery(user, {
-      assignedRepId: '507f1f77bcf86cd799439099',
-    });
+    const otherRep = '507f1f77bcf86cd799439099';
+    const query = buildLeadListQuery(user, { assignedRepId: otherRep });
 
-    expect(String(query.assignedRepId)).toBe(user._id);
+    expect(query.crmType).toBeUndefined();
+    expect(String(query.assignedRepId)).toBe(otherRep);
   });
 
-  it('lets artist-management filter shared pipeline by assignedRepId', () => {
+  it('lets artist-management filter shared pipeline by assignedRepId without crmType', () => {
     const user = {
       _id: '507f1f77bcf86cd799439011',
       departmentId: { slug: 'artist-management' },
@@ -33,7 +33,7 @@ describe('leadQueryService list limits', () => {
     const otherRep = '507f1f77bcf86cd799439099';
     const query = buildLeadListQuery(user, { assignedRepId: otherRep });
 
-    expect(query.crmType).toBe('artist');
+    expect(query.crmType).toBeUndefined();
     expect(String(query.assignedRepId)).toBe(otherRep);
   });
 });
