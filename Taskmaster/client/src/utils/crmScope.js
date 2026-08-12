@@ -49,8 +49,6 @@ export function crmRestrictsToOwnLeads() {
 }
 
 export function crmQueryParamsForUser(_user, extra = {}) {
-  // Shared CRM — never inject crmType. List shows artist + academy for everyone.
-  const next = { ...extra };
-  delete next.crmType;
-  return next;
+  // Shared CRM — do not inject crmType. An explicit filter may still pass one.
+  return { ...extra };
 }

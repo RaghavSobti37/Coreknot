@@ -25,7 +25,7 @@ describe('leadQueryService list limits', () => {
     expect(String(query.assignedRepId)).toBe(otherRep);
   });
 
-  it('lets artist-management filter shared pipeline by assignedRepId without crmType', () => {
+  it('lets artist-management filter shared pipeline by assignedRepId without implied crmType', () => {
     const user = {
       _id: '507f1f77bcf86cd799439011',
       departmentId: { slug: 'artist-management' },
@@ -35,5 +35,15 @@ describe('leadQueryService list limits', () => {
 
     expect(query.crmType).toBeUndefined();
     expect(String(query.assignedRepId)).toBe(otherRep);
+  });
+
+  it('applies an explicit artist vs academy crmType filter', () => {
+    const user = {
+      _id: '507f1f77bcf86cd799439014',
+      departmentId: { slug: 'artist-management' },
+    };
+    expect(buildLeadListQuery(user, { crmType: 'artist' }).crmType).toBe('artist');
+    expect(buildLeadListQuery(user, { crmType: 'sales' }).crmType).toBe('sales');
+    expect(buildLeadListQuery(user, { crmType: 'all' }).crmType).toBeUndefined();
   });
 });

@@ -12,7 +12,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { isAdminUser } from '../../utils/departmentPermissions';
 import { useConfirm } from '../../contexts/confirmContext';
 import { useToast } from '../../contexts/ToastContext';
-import { useLiveLeads, useSalesReps, useArtistReps, useArtistImportSheets, useCRMStats, useUpdateLead, useCreateLead, useCRMConfig, useLeadDetail } from '../../hooks/useTaskmasterQueries';
+import { useLiveLeads, useSalesReps, useArtistReps, useCRMStats, useUpdateLead, useCreateLead, useCRMConfig, useLeadDetail } from '../../hooks/useTaskmasterQueries';
 import { useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { formatExlyTag, MEANINGFUL_CONNECT_OPTIONS, formatMeaningfulConnect, meaningfulConnectBadgeVariant, formatLeadTypeTag, getLeadTypeTag } from '../../utils/crmUtils';
@@ -69,10 +69,9 @@ const loadLeadsFilters = () => {
     const raw = localStorage.getItem(CRM_LEADS_FILTERS_KEY);
     if (raw) {
       const saved = JSON.parse(raw);
-      if (saved.importSheet && saved.importSheet !== 'all' && (!saved.source || saved.source === 'all')) {
-        saved.source = saved.importSheet;
-      }
       delete saved.importSheet;
+      delete saved.source;
+      if (!saved.crmType) saved.crmType = 'all';
       return saved;
     }
   } catch {
@@ -82,7 +81,7 @@ const loadLeadsFilters = () => {
     leadStatus: 'all',
     meaningfulConnect: 'all',
     warmPipeline: false,
-    source: 'all',
+    crmType: 'all',
     leadQuality: 'all',
     assignedRepId: 'all',
     pageSize: 10,
@@ -375,7 +374,7 @@ export default function LeadsPage() {
       leadStatus: 'all',
       meaningfulConnect: 'all',
       warmPipeline: false,
-      source: 'all',
+      crmType: 'all',
       leadQuality: 'all',
       assignedRepId: 'all',
       ...(artistCrmView ? { artistProject: 'all', contactCategory: 'all', emailStatus: 'all' } : {}),
@@ -398,8 +397,8 @@ export default function LeadsPage() {
         setFilters((prev) => ({ ...prev, meaningfulConnect: 'all' }));
         setStatFilter(null);
         break;
-      case 'source':
-        setFilters((prev) => ({ ...prev, source: 'all' }));
+      case 'crmType':
+        setFilters((prev) => ({ ...prev, crmType: 'all' }));
         break;
       case 'leadQuality':
         setFilters((prev) => ({ ...prev, leadQuality: 'all' }));
@@ -458,12 +457,10 @@ export default function LeadsPage() {
   const { data, isLoading, isError, error, refetch } = useLiveLeads(queryParams);
   const primaryLeadsReady = !isLoading;
   const deferCrmSecondary = useDeferredQueryEnabled(primaryLeadsReady, { tier: 0 });
-  const deferCrmTertiary = useDeferredQueryEnabled(primaryLeadsReady, { tier: 1 });
   const statsParams = useMemo(() => ({}), []);
   const { data: statsData } = useCRMStats(deferCrmSecondary, { queryParams: statsParams });
   const { data: salesTeam = [] } = useSalesReps(deferCrmSecondary);
   const { data: artistTeam = [] } = useArtistReps(deferCrmSecondary);
-  const { data: artistImportSheets = [] } = useArtistImportSheets(artistCrmView && deferCrmTertiary);
   const filterTeam = useMemo(() => {
     const byId = new Map();
     for (const rep of [...salesTeam, ...artistTeam]) {
@@ -506,33 +503,6 @@ export default function LeadsPage() {
       })
       .catch(() => {});
   }, [searchParams, leads]);
-  const sourceFilterOptions = useMemo(() => {
-    const defaults = ['Organic / Direct', 'Webinar', 'Facebook Ads', 'Google Ads', 'Referral'];
-    const sheetBySource = new Map(
-      artistImportSheets.map((s) => [s.source, s.label]),
-    );
-    const raw = crmConfig?.sources || defaults;
-    const options = [{ value: 'all', label: 'All Sources' }];
-    const seen = new Set(['all']);
-
-    for (const sheet of artistImportSheets) {
-      if (!sheet.source || seen.has(sheet.source)) continue;
-      seen.add(sheet.source);
-      options.push({ value: sheet.source, label: sheet.label });
-    }
-
-    for (const source of raw) {
-      if (!source || seen.has(source)) continue;
-      seen.add(source);
-      options.push({
-        value: source,
-        label: sheetBySource.get(source) || source,
-      });
-    }
-
-    return options;
-  }, [crmConfig?.sources, artistImportSheets]);
-
   const leadStatusesList = crmConfig?.leadStatuses || ['New', 'Contacted', 'Warm', 'Hot', 'Qualified', 'Proposal', 'Converted', 'Lost'];
   const callStatusesList = crmConfig?.callStatuses || ['Pending', 'Connected', 'Busy', 'DNP', 'Switched Off'];
   const qualitiesList = crmConfig?.qualities || ['1', '2', '3', '4', '5', 'Future 4'];
@@ -541,13 +511,26 @@ export default function LeadsPage() {
   const activeFilterChips = useMemo(
     () => buildLeadsActiveFilterChips(
       { searchTerm, statFilter, filters },
-      { sourceOptions: sourceFilterOptions, filterTeam, artistMode },
+      { filterTeam, artistMode },
     ),
-    [searchTerm, statFilter, filters, sourceFilterOptions, filterTeam, artistMode],
+    [searchTerm, statFilter, filters, filterTeam, artistMode],
   );
 
   const filterFields = useMemo(() => {
     const fields = [
+      {
+        id: 'crmType',
+        label: 'Type',
+        type: 'radio',
+        value: filters.crmType || 'all',
+        defaultValue: 'all',
+        options: [
+          { value: 'all', label: 'All Types' },
+          { value: 'artist', label: 'Artist Lead' },
+          { value: 'sales', label: 'Academy Lead' },
+        ],
+        onChange: (v) => setFilters((prev) => ({ ...prev, crmType: v })),
+      },
       {
         id: 'leadStatus',
         label: 'Interest Level',
@@ -577,15 +560,6 @@ export default function LeadsPage() {
           setStatFilter(v === 'YES' ? 'meaningful' : null);
           setFilters((prev) => ({ ...prev, meaningfulConnect: v, warmPipeline: false }));
         },
-      },
-      {
-        id: 'source',
-        label: 'Source',
-        type: sourceFilterOptions.length > 9 ? 'searchable' : 'radio',
-        value: filters.source,
-        defaultValue: 'all',
-        options: sourceFilterOptions,
-        onChange: (v) => setFilters((prev) => ({ ...prev, source: v })),
       },
       {
         id: 'leadQuality',
@@ -671,7 +645,6 @@ export default function LeadsPage() {
     leadStatusesList,
     meaningfulConnectList,
     qualitiesList,
-    sourceFilterOptions,
   ]);
 
   const isDefaultSort = sortField === 'createdAt' && sortOrder === 'desc';

@@ -61,11 +61,17 @@ describe('buildLeadsActiveFilterChips', () => {
       {
         searchTerm: 'rahul',
         statFilter: 'meaningful',
-        filters: { leadStatus: 'Warm', source: 'all', assignedRepId: 'all' },
+        filters: { leadStatus: 'Warm', crmType: 'all', assignedRepId: 'all' },
       },
-      { sourceOptions: [{ value: 'Referral', label: 'Referral' }] },
     );
     expect(chips.map((c) => c.id)).toEqual(['searchTerm', 'statFilter', 'leadStatus']);
+  });
+
+  it('includes artist vs academy type chip', () => {
+    const chips = buildLeadsActiveFilterChips({
+      filters: { crmType: 'sales' },
+    });
+    expect(chips).toEqual([{ id: 'crmType', label: 'Type: Academy Lead' }]);
   });
 });
 

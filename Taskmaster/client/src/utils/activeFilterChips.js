@@ -123,7 +123,6 @@ export function buildLeadsActiveFilterChips({
   statFilter = null,
   filters = {},
 } = {}, {
-  sourceOptions = [],
   filterTeam = [],
   artistMode = false,
 } = {}) {
@@ -143,9 +142,9 @@ export function buildLeadsActiveFilterChips({
   if (filters.meaningfulConnect && filters.meaningfulConnect !== 'all') {
     chips.push({ id: 'meaningfulConnect', label: `Meaningful: ${filters.meaningfulConnect}` });
   }
-  if (filters.source && filters.source !== 'all') {
-    const label = sourceOptions.find((o) => o.value === filters.source)?.label || filters.source;
-    chips.push({ id: 'source', label: `Source: ${label}` });
+  if (filters.crmType && filters.crmType !== 'all') {
+    const typeLabel = filters.crmType === 'artist' ? 'Artist Lead' : 'Academy Lead';
+    chips.push({ id: 'crmType', label: `Type: ${typeLabel}` });
   }
   if (filters.leadQuality && filters.leadQuality !== 'all') {
     chips.push({ id: 'leadQuality', label: `Quality: Level ${filters.leadQuality}` });

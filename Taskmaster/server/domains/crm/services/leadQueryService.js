@@ -54,6 +54,9 @@ function buildLeadListQuery(user, queryParams) {
     ];
   }
 
+  if (queryParams.crmType === 'artist' || queryParams.crmType === 'sales') {
+    query.crmType = queryParams.crmType;
+  }
   if (queryParams.leadQuality && queryParams.leadQuality !== 'all') query.leadQuality = queryParams.leadQuality;
   if (queryParams.callStatus && queryParams.callStatus !== 'all') query.callStatus = queryParams.callStatus;
   if (queryParams.source && queryParams.source !== 'all') query.source = queryParams.source;
