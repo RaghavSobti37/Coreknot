@@ -417,6 +417,15 @@ async function updateLead(user, leadId, body) {
     updates.assignedRepId = String(updates.assignedRepId);
   }
 
+  // Canonical pipeline tag (artist-lead vs academy-lead) must survive tag edits.
+  if (Array.isArray(updates.tags)) {
+    const { crmTypeTag } = require('../../../utils/leadTypeTag');
+    const canonical = crmTypeTag(updates.crmType !== undefined ? updates.crmType : currentLead.crmType);
+    const cleanTags = updates.tags.filter((t) => typeof t === 'string' && t.trim());
+    if (!cleanTags.includes(canonical)) cleanTags.push(canonical);
+    updates.tags = cleanTags;
+  }
+
   const contactPrep = prepareLeadContactUpdates(updates, currentLead);
   if (contactPrep) return contactPrep;
 

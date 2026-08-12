@@ -4,6 +4,7 @@ const { auditLogPlugin } = require('../../../plugins/auditLogPlugin');
 
 const { canonicalLeadStatus } = require('../../../utils/crmPipelineFilters');
 const { applyPersonIdentityToDoc } = require('../../../utils/personNormalization');
+const { ensureLeadTypeTag, crmTypeTag } = require('../../../utils/leadTypeTag');
 const auditPlugin = require('../../../models/plugins/auditPlugin');
 
 /**
@@ -117,7 +118,18 @@ LeadSchema.pre('save', function () {
   if (this.leadStatus) this.leadStatus = canonicalLeadStatus(this.leadStatus);
   const phoneRequired = this.crmType !== 'artist';
   applyPersonIdentityToDoc(this, { phoneRequired });
+  // Canonical pipeline tag (artist-lead vs academy-lead) — stamped on every save.
+  ensureLeadTypeTag(this);
 });
+
+/** Re-stamp the type tag when an update explicitly changes crmType or tags. */
+const ensureTypeTagInUpdate = (set) => {
+  if (!set || set.crmType === undefined) return;
+  const tag = crmTypeTag(set.crmType);
+  const tags = Array.isArray(set.tags) ? set.tags.filter((t) => typeof t === 'string' && t.trim()) : [];
+  if (!tags.includes(tag)) tags.push(tag);
+  set.tags = tags;
+};
 
 const sanitizeLeadUpdate = (update) => {
   if (!update) return;
@@ -126,6 +138,7 @@ const sanitizeLeadUpdate = (update) => {
   if (set.name || set.email || set.phone || set.city) {
     applyPersonIdentityToDoc(set, { phoneRequired: false });
   }
+  ensureTypeTagInUpdate(set);
 };
 
 LeadSchema.pre('findOneAndUpdate', function () {

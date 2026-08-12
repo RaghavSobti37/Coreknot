@@ -5,6 +5,18 @@ export const CRM_TYPES = {
   ARTIST: 'artist',
 };
 
+const AKASH_PATTERNS = [/akash/i];
+
+/**
+ * Akash (artist-management) owns the full CRM — sees artist + academy leads.
+ * Mirrors server/utils/crmScope.js isAkashUser.
+ */
+export function isAllCrmScopeUser(user) {
+  if (!user || isAdminUser(user)) return false;
+  if (getDepartmentSlug(user) !== ARTIST_SLUG) return false;
+  return AKASH_PATTERNS.some((p) => p.test(user?.name || '') || p.test(user?.email || ''));
+}
+
 /** Artist CRM filters, import UI, and manager list (artist dept, artists-page access, admin). */
 export function isArtistCrmView(user) {
   if (!user) return false;
@@ -15,6 +27,7 @@ export function isArtistCrmView(user) {
 /** Artist-management dept users (not sales/admin) see artist CRM segment. */
 export function isArtistOnlyCrmUser(user) {
   if (!user || isAdminUser(user)) return false;
+  if (isAllCrmScopeUser(user)) return false; // Akash sees the full pipeline, not just artist.
   const slug = getDepartmentSlug(user);
   return slug === ARTIST_SLUG;
 }
@@ -36,9 +49,10 @@ export function crmRestrictsToOwnLeads() {
 }
 
 export function crmQueryParamsForUser(user, extra = {}) {
-  const crmType = extra.crmType || resolveClientCrmType(user);
-  if (isAdminUser(user) && !extra.crmType) {
+  // Admin and Akash browse both CRM segments — no crmType filter from the client.
+  if ((isAdminUser(user) || isAllCrmScopeUser(user)) && !extra.crmType) {
     return { ...extra };
   }
+  const crmType = extra.crmType || resolveClientCrmType(user);
   return { ...extra, crmType };
 }

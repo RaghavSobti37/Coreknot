@@ -17,6 +17,29 @@ const getRepName = (rep) => {
   return SALES_REPS[rep] || rep;
 };
 
+/** Canonical pipeline tags — mirror shared/artistCrmTaxonomy.js LEAD_TYPE_TAGS. */
+export const LEAD_TYPE_TAGS = {
+  ARTIST: 'artist-lead',
+  ACADEMY: 'academy-lead',
+};
+
+export const LEAD_TYPE_TAG_LABELS = {
+  [LEAD_TYPE_TAGS.ARTIST]: 'Artist Lead',
+  [LEAD_TYPE_TAGS.ACADEMY]: 'Academy Lead',
+};
+
+/** Derive a lead's pipeline tag from its tags array or crmType. */
+export function getLeadTypeTag(lead) {
+  const tags = lead?.tags || [];
+  if (Array.isArray(tags) && tags.includes(LEAD_TYPE_TAGS.ARTIST)) return LEAD_TYPE_TAGS.ARTIST;
+  if (Array.isArray(tags) && tags.includes(LEAD_TYPE_TAGS.ACADEMY)) return LEAD_TYPE_TAGS.ACADEMY;
+  return lead?.crmType === 'artist' ? LEAD_TYPE_TAGS.ARTIST : LEAD_TYPE_TAGS.ACADEMY;
+}
+
+export function formatLeadTypeTag(tag) {
+  return LEAD_TYPE_TAG_LABELS[tag] || 'Lead';
+}
+
 export const MEANINGFUL_CONNECT_DEFAULT = 'PENDING';
 
 /** Manual rep flag — not derived from call status or funnel stage. */

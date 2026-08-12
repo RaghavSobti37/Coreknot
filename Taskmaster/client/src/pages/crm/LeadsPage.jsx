@@ -15,7 +15,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useLiveLeads, useSalesReps, useArtistReps, useArtistImportSheets, useCRMStats, useUpdateLead, useCreateLead, useCRMConfig, useLeadDetail } from '../../hooks/useTaskmasterQueries';
 import { useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { formatExlyTag, MEANINGFUL_CONNECT_OPTIONS, formatMeaningfulConnect, meaningfulConnectBadgeVariant } from '../../utils/crmUtils';
+import { formatExlyTag, MEANINGFUL_CONNECT_OPTIONS, formatMeaningfulConnect, meaningfulConnectBadgeVariant, getLeadTypeTag, formatLeadTypeTag, LEAD_TYPE_TAGS } from '../../utils/crmUtils';
 import { validateLeadFormFields } from '../../utils/leadFormValidation';
 import { buildLeadEditState, leadEditHasChanges } from '../../utils/leadEditState';
 import PhoneNumberFields from '../../components/crm/PhoneNumberFields';
@@ -25,7 +25,7 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { useDeferredQueryEnabled } from '../../hooks/useDeferredQuery';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { applyFlashHighlight } from '../../utils/navigationHighlight';
-import { crmQueryParamsForUser, isArtistOnlyCrmUser, isArtistCrmView, isArtistCrmContext } from '../../utils/crmScope';
+import { crmQueryParamsForUser, isArtistOnlyCrmUser, isArtistCrmView, isArtistCrmContext, isAllCrmScopeUser } from '../../utils/crmScope';
 import LeadArtistJourneySection from '../../components/crm/LeadArtistJourneySection';
 import ArtistCrmImportPanel from '../../components/crm/ArtistCrmImportPanel';
 import ArtistBookingEnquiryPanel from '../../components/crm/ArtistBookingEnquiryPanel';
@@ -472,7 +472,8 @@ export default function LeadsPage() {
     return [...byId.values()].sort((a, b) =>
       String(a.name || '').localeCompare(String(b.name || '')));
   }, [artistMode, salesTeam, artistTeam]);
-  const assignTeam = artistRepContext || artistMode ? artistTeam : filterTeam;
+  // Akash owns every pipeline — always offer the full rep list (artist + academy).
+  const assignTeam = isAllCrmScopeUser(user) ? filterTeam : (artistRepContext || artistMode ? artistTeam : filterTeam);
   const { data: crmConfig } = useCRMConfig(deferCrmSecondary);
 
   const openAddLeadModal = useCallback(() => {
@@ -705,6 +706,22 @@ export default function LeadsPage() {
           <div className="flex items-center gap-2 flex-wrap">
             <LeadLockIndicator lead={row} currentUserId={user?._id} />
             <span className="font-bold text-xs tracking-tight">{row?.name || 'Unknown'}</span>
+            {(() => {
+              const typeTag = getLeadTypeTag(row);
+              const isArtist = typeTag === LEAD_TYPE_TAGS.ARTIST;
+              return (
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded border font-bold tracking-tight ${
+                    isArtist
+                      ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300'
+                      : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                  }`}
+                  title={isArtist ? 'Artist pipeline (with Akash / Harshika)' : 'Academy / sales pipeline (with Satyam)'}
+                >
+                  {formatLeadTypeTag(typeTag)}
+                </span>
+              );
+            })()}
             {row.artistType && (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-bg-secondary)] border border-[var(--color-bg-border)] text-[var(--color-text-muted)] font-normal tracking-tight">
                 {row.artistType.replace(' Artiste', '')}

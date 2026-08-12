@@ -26,6 +26,18 @@ const IMPORT_TAGS = {
   HARSHAD_DUHITA: 'harshad-duhita',
 };
 
+/** Canonical pipeline tags stamped on every lead (artist vs academy/sales). */
+const LEAD_TYPE_TAGS = {
+  ARTIST: 'artist-lead',
+  ACADEMY: 'academy-lead',
+};
+
+/** Mirrored on the client in client/src/utils/crmUtils.js — keep in sync. */
+const LEAD_TYPE_TAG_LABELS = {
+  [LEAD_TYPE_TAGS.ARTIST]: 'Artist Lead',
+  [LEAD_TYPE_TAGS.ACADEMY]: 'Academy Lead',
+};
+
 /** Slugify Event DB category column for tag filter. */
 function categoryToTagSlug(category) {
   return String(category || '')
@@ -40,5 +52,7 @@ module.exports = {
   CRM_TYPES,
   ARTIST_PROJECTS,
   IMPORT_TAGS,
+  LEAD_TYPE_TAGS,
+  LEAD_TYPE_TAG_LABELS,
   categoryToTagSlug,
 };
