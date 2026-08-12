@@ -15,12 +15,13 @@ import { useToast } from '../../contexts/ToastContext';
 import { useLiveLeads, useSalesReps, useArtistReps, useArtistImportSheets, useCRMStats, useUpdateLead, useCreateLead, useCRMConfig, useLeadDetail } from '../../hooks/useTaskmasterQueries';
 import { useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { formatExlyTag, MEANINGFUL_CONNECT_OPTIONS, formatMeaningfulConnect, meaningfulConnectBadgeVariant, getLeadTypeTag, formatLeadTypeTag, LEAD_TYPE_TAGS } from '../../utils/crmUtils';
+import { formatExlyTag, MEANINGFUL_CONNECT_OPTIONS, formatMeaningfulConnect, meaningfulConnectBadgeVariant, formatLeadTypeTag, getLeadTypeTag } from '../../utils/crmUtils';
 import { validateLeadFormFields } from '../../utils/leadFormValidation';
 import { buildLeadEditState, leadEditHasChanges } from '../../utils/leadEditState';
 import PhoneNumberFields from '../../components/crm/PhoneNumberFields';
 import LeadLockIndicator from '../../components/crm/LeadLockIndicator';
 import LeadRowActions from '../../components/crm/LeadRowActions';
+import LeadTypeTagBadge from '../../components/crm/LeadTypeTagBadge';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useDeferredQueryEnabled } from '../../hooks/useDeferredQuery';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
@@ -696,7 +697,7 @@ export default function LeadsPage() {
       header: 'Customer Details',
       sortKey: 'name',
       mobilePrimary: true,
-      mobileSubtitle: (row) => [row?.email, row?.phone].filter(Boolean).join(' • '),
+      mobileSubtitle: (row) => [formatLeadTypeTag(getLeadTypeTag(row)), row?.email, row?.phone].filter(Boolean).join(' • '),
       render: (row) => (
         <div className={`relative flex flex-col gap-1.5 pr-16 ${isLockedByOther(row, user?._id) ? 'opacity-60' : ''}`}>
           <LeadRowActions
@@ -706,22 +707,7 @@ export default function LeadsPage() {
           <div className="flex items-center gap-2 flex-wrap">
             <LeadLockIndicator lead={row} currentUserId={user?._id} />
             <span className="font-bold text-xs tracking-tight">{row?.name || 'Unknown'}</span>
-            {(() => {
-              const typeTag = getLeadTypeTag(row);
-              const isArtist = typeTag === LEAD_TYPE_TAGS.ARTIST;
-              return (
-                <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded border font-bold tracking-tight ${
-                    isArtist
-                      ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300'
-                      : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
-                  }`}
-                  title={isArtist ? 'Artist pipeline (with Akash / Harshika)' : 'Academy / sales pipeline (with Satyam)'}
-                >
-                  {formatLeadTypeTag(typeTag)}
-                </span>
-              );
-            })()}
+            <LeadTypeTagBadge lead={row} />
             {row.artistType && (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-bg-secondary)] border border-[var(--color-bg-border)] text-[var(--color-text-muted)] font-normal tracking-tight">
                 {row.artistType.replace(' Artiste', '')}
@@ -766,6 +752,12 @@ export default function LeadsPage() {
           <span className="text-[11px] text-[var(--color-text-muted)] font-mono">{row?.email || ''} {row?.phone ? `• ${row?.phone}` : ''} {row?.city ? `• ${row?.city}` : ''}</span>
         </div>
       )
+    },
+    {
+      header: 'Type',
+      sortKey: 'crmType',
+      info: 'Artist Lead vs Academy Lead pipeline tag.',
+      render: (row) => <LeadTypeTagBadge lead={row} />,
     },
     {
       header: 'Quality Score',
@@ -1084,6 +1076,7 @@ export default function LeadsPage() {
             <DetailSidebarSection label="Pipeline Snapshot">
               <div className="tm-stat-shell p-4 space-y-3">
               <div className="flex flex-wrap gap-2">
+                <LeadTypeTagBadge lead={{ ...selectedLead, ...editLeadData }} />
                 <StatusBadge status={editLeadData.leadStatus === 'Converted' ? 'converted' : 'active'}>
                   {(editLeadData.leadStatus || 'New').toUpperCase()}
                 </StatusBadge>

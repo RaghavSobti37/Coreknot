@@ -1,7 +1,7 @@
 # CoreKnot — Master Reference
 
 > **Canonical product bible.** Every routed page, APIs, hooks, exports, and access rules.  
-> **Product:** CoreKnot · **Repo:** `coreknot/Taskmaster` · **Version:** 1.0.8-beta.3 · **Compiled:** 2026-08-11
+> **Product:** CoreKnot · **Repo:** `coreknot/Taskmaster` · **Version:** 1.0.8-beta.3 · **Compiled:** 2026-08-12
 
 ---
 
@@ -622,7 +622,7 @@ _No direct `/api/...` string literals — data via shared hooks (e.g. `useTaskma
 | --- | --- |
 | **Route(s)** | (tab: leads) |
 | **Default export** | `function` |
-| **Lines** | 1406 |
+| **Lines** | 1423 |
 | **Hooks** | `useArtistImportSheets`, `useArtistReps`, `useAuth`, `useCRMConfig`, `useCRMStats`, `useCallback`, `useConfirm`, `useCreateLead`, `useDebounce`, `useDeferredQueryEnabled`, `useEffect`, `useLeadDetail`, `useLiveLeads`, `useMemo`, `useQueryClient`, `useRef`, `useSalesReps`, `useSearchParams`, `useState`, `useToast`, `useUnsavedChanges`, `useUpdateLead` |
 | **Data hooks** | `useArtistImportSheets` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useArtistReps` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useAuth` → /api/artists/${artistId}, /api/artists/${artistId}/claim, /api/artists/${artistId}/members · `useCRMConfig` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useCRMStats` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useConfirm` → /api/contacts, /api/contacts/${editingContact._id}, /api/contacts/${id} · `useCreateLead` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useDebounce` → /api/crm/leads/${highlightId}, /api/crm/leads/${id}, /api/crm/leads/${leadId}/audit · `useDeferredQueryEnabled` → /api/admin/media-contacts, /api/admin/media-contacts/filters, /api/admin/platform-settings · `useLeadDetail` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useLiveLeads` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useSalesReps` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports · `useSearchParams` → /api/auth/google?state=link_${user?._id}, /api/auth/reset-password, /api/crm/leads/${highlightId} · `useToast` → /api/admin/platform-settings, /api/admin/tenants, /api/admin/tenants/${tenant._id} · `useUnsavedChanges` → /api/admin/platform-settings, /api/auth/change-required-password, /api/auth/google?state=link_${user?._id} · `useUpdateLead` → /api/crm/artist/import-sheets, /api/crm/config, /api/crm/imports |
 | **Key components** | `ArtistBookingEnquiryPanel`, `ArtistCrmImportPanel`, `LeadArtistJourneySection`, `LeadLockIndicator`, `LeadRowActions`, `PhoneNumberFields` |

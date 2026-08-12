@@ -34,6 +34,7 @@ import { buildLeadEditState, leadEditHasChanges } from '../../utils/leadEditStat
 import { MEANINGFUL_CONNECT_OPTIONS, formatMeaningfulConnect, meaningfulConnectBadgeVariant } from '../../utils/crmUtils';
 import PhoneNumberFields from '../../components/crm/PhoneNumberFields';
 import LeadLockIndicator from '../../components/crm/LeadLockIndicator';
+import LeadTypeTagBadge from '../../components/crm/LeadTypeTagBadge';
 import ArtistBookingEnquiryPanel from '../../components/crm/ArtistBookingEnquiryPanel';
 import { isLockedByOther, formatLockToast, closeLeadEditor, releaseLeadLock } from '../../utils/crmLeadLock';
 
@@ -307,6 +308,7 @@ export default function FollowupsPage() {
         <div className={`flex flex-col gap-1 ${isLockedByOther(row, user?._id) ? 'opacity-60' : ''}`}>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-bold text-xs tracking-tight">{row?.name}</span>
+            <LeadTypeTagBadge lead={row} />
             <LeadLockIndicator lead={row} currentUserId={user?._id} />
             {row.source && (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold tracking-tight">
