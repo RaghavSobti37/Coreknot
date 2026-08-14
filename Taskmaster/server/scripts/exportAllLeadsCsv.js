@@ -10,6 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const Lead = require('../domains/crm/models/Lead');
+require('../models/User'); // register User so populate('assignedRepId') resolves
 const { bypassOptions } = require('../infrastructure/database/bypassTenantPolicy');
 const { leadCsvHeader, leadToCsvLine } = require('../domains/crm/services/leadCsvExport');
 
