@@ -40,7 +40,6 @@ function requireCrmAccess(req, res, next) {
 
 router.use(protect);
 
-router.get('/export', admin, crmController.exportLeads);
 router.get('/purge-logs', admin, crmController.getPurgeLogs);
 router.delete('/imports/:id', admin, crmController.deleteImport);
 router.post('/reset', admin, crmController.resetCRM);
@@ -70,6 +69,9 @@ router.get('/leads/audit-logs', admin, crmController.getAllAuditLogs);
 router.delete('/leads/audit-logs/purge', admin, crmController.purgeAuditLogs);
 
 router.use(requireCrmAccess);
+
+// Export respects the same filters + scope as the leads list; supports ?ids=... for checkbox selection.
+router.get('/export', crmController.exportLeads);
 
 router.post('/leads/upload', upload.single('file'), crmController.uploadLeads);
 router.get('/stats', crmController.getCRMStats);

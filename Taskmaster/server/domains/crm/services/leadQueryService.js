@@ -15,6 +15,7 @@ const {
 } = require('../../../utils/followupDateQuery');
 const logger = require('../../../utils/logger');
 const { enrichLeadDetail } = require('./leadEnrichmentService');
+const { leadCsvHeader, leadToCsvLine } = require('./leadCsvExport');
 
 const MAX_LEAD_LIST_LIMIT = 100;
 const clampPositiveInt = (value, fallback, max) => {
@@ -299,13 +300,31 @@ async function fetchLeadById(user, leadId, queryParams = {}) {
   return { lead };
 }
 
-async function streamLeadExport(res, { format: exportFormat }) {
+async function streamLeadExport(res, user, queryParams = {}) {
+  const exportFormat = queryParams.format || 'csv';
+
+  // Same query as the list endpoint — exports respect the active filters + CRM scope.
+  const query = buildLeadListQuery(user, queryParams);
+
+  // Optional explicit row selection — export only these lead ids (e.g. checkbox selection).
+  const ids = String(queryParams.ids || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (ids.length) {
+    const validIds = ids
+      .filter((id) => mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+    query._id = { $in: validIds };
+  }
+
+  const cursor = Lead.find(query).populate('assignedRepId', 'name email').lean().cursor();
+
   if (exportFormat === 'json') {
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', 'attachment; filename=leads_export.json');
     res.write('[');
     let isFirst = true;
-    const cursor = Lead.find({}).populate('assignedRepId', 'name').lean().cursor();
 
     cursor.on('data', (doc) => {
       if (!isFirst) res.write(',');
@@ -322,26 +341,10 @@ async function streamLeadExport(res, { format: exportFormat }) {
 
   res.setHeader('Content-Type', 'text/csv');
   res.setHeader('Content-Disposition', 'attachment; filename=leads_export.csv');
+  res.write(`${leadCsvHeader()}\n`);
 
-  const fields = ['name', 'email', 'phone', 'city', 'leadStatus', 'callStatus', 'leadQuality', 'remarks', 'assignedRep', 'createdAt'];
-  res.write(`${fields.join(',')}\n`);
-
-  const cursor = Lead.find({}).populate('assignedRepId', 'name').lean().cursor();
-
-  cursor.on('data', (l) => {
-    const row = [
-      `"${(l.name || '').replace(/[\r\n]+/g, ' ').replace(/"/g, '""')}"`,
-      `"${(l.email || '').replace(/"/g, '""')}"`,
-      `"${(l.phone || '').replace(/"/g, '""')}"`,
-      `"${(l.city || '').toLowerCase().replace(/"/g, '""')}"`,
-      `"${(l.leadStatus || '').replace(/"/g, '""')}"`,
-      `"${(l.callStatus || '').replace(/"/g, '""')}"`,
-      `"${(l.leadQuality || '').replace(/"/g, '""')}"`,
-      `"${(l.remarks || '').replace(/[\r\n]+/g, ' • ').replace(/"/g, '""')}"`,
-      `"${(l.assignedRepId?.name || 'Unassigned').replace(/"/g, '""')}"`,
-      `"${l.createdAt ? l.createdAt.toISOString() : ''}"`,
-    ];
-    res.write(`${row.join(',')}\n`);
+  cursor.on('data', (lead) => {
+    res.write(`${leadToCsvLine(lead)}\n`);
   });
 
   cursor.on('end', () => res.end());

@@ -77,7 +77,9 @@
     "sync:aisensy-catalog": "node scripts/syncAisensyCampaignCatalog.js",
     "sync:aisensy-catalog:prod": "node scripts/syncAisensyCampaignCatalog.js --prod --execute",
     "sync:aisensy-outcomes": "node scripts/syncAisensyCampaignOutcomes.js",
-    "sync:aisensy-outcomes:prod": "node scripts/syncAisensyCampaignOutcomes.js --prod --execute"
+    "sync:aisensy-outcomes:prod": "node scripts/syncAisensyCampaignOutcomes.js --prod --execute",
+    "export:leads": "node scripts/exportAllLeadsCsv.js",
+    "export:leads:prod": "node scripts/exportAllLeadsCsv.js --prod"
   },
   "dependencies": {
     "@clerk/clerk-sdk-node": "^5.1.6",

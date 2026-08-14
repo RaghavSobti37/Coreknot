@@ -209,7 +209,7 @@ exports.getPurgeLogs = async (req, res) => {
 
 exports.exportLeads = async (req, res) => {
   try {
-    await streamLeadExport(res, req.query);
+    await streamLeadExport(res, req.user, req.query);
   } catch (error) {
     logger.error('crmController', 'Export Init ', { error: error.message || error });
     if (!res.headersSent) res.status(500).json({ error: 'Failed to export leads' });

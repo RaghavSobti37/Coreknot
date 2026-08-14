@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom';
 import {
   Search, Plus, Trash2, CheckCircle2,
-  Database, UserCheck, Briefcase, Users, Zap, Target, Clock, MapPin, Globe, Calendar, MessageSquare, Send, Bell, History, UserPlus, Mail
+  Database, UserCheck, Briefcase, Users, Zap, Target, Clock, MapPin, Globe, Calendar, MessageSquare, Send, Bell, History, UserPlus, Mail, Download
 } from 'lucide-react';
 import { Card, DataTable, Button, Input, PageSkeleton, ListPageLayout, SearchInput, UserLabel, FullScreenWorkspace, QueryErrorBanner, getQueryErrorMessage, DetailSidebarShell, DetailSidebarSection, StatusBadge } from '../../components/ui';
 import { countActiveFilters } from '../../components/ui/selectionFilterUtils';
@@ -485,6 +485,39 @@ export default function LeadsPage() {
   const totalPages = data?.pages || 1;
   const highlightHandledRef = useRef(null);
 
+  /**
+   * Export leads as CSV. Respects the active filters/search; if rows are
+   * checkbox-selected, only those rows are exported (via ?ids=).
+   */
+  const handleExportLeads = useCallback(() => {
+    const params = new URLSearchParams();
+    params.set('format', 'csv');
+    Object.entries(queryParams).forEach(([key, value]) => {
+      if (key === 'page' || key === 'limit') return;
+      if (value === undefined || value === null || value === '') return;
+      if (typeof value === 'boolean') {
+        if (value) params.set(key, 'true');
+        return;
+      }
+      params.set(key, String(value));
+    });
+    if (selectedLeadIds.length > 0) {
+      params.set('ids', selectedLeadIds.join(','));
+    }
+    const url = `/api/crm/export?${params.toString()}`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = selectedLeadIds.length > 0 ? 'leads_selected.csv' : 'leads_filtered.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast.success(
+      selectedLeadIds.length > 0
+        ? `Exporting ${selectedLeadIds.length} selected lead${selectedLeadIds.length === 1 ? '' : 's'}`
+        : 'Exporting filtered leads…'
+    );
+  }, [queryParams, selectedLeadIds, toast]);
+
   useEffect(() => {
     const highlightId = searchParams.get('highlight');
     if (!highlightId || highlightHandledRef.current === highlightId) return;
@@ -838,6 +871,9 @@ export default function LeadsPage() {
       toolbarActions={(
         <>
           {artistCrmView && <ArtistCrmImportPanel compact />}
+          <Button size="sm" variant="secondary" onClick={handleExportLeads} title="Export leads as CSV — respects active filters (or only checked rows)">
+            <Download size={14} /> Export
+          </Button>
           <Button size="sm" onClick={openAddLeadModal} data-mobile-primary>
             <Plus size={14} /> {artistMode ? 'Add Contact' : 'Add Lead'}
           </Button>
@@ -855,10 +891,13 @@ export default function LeadsPage() {
           <span className="text-xs font-bold text-[var(--color-text-secondary)]">
             {selectedLeadIds.length} selected
           </span>
+          <Button size="sm" variant="secondary" onClick={handleExportLeads}>
+            <Download size={14} /> Export selected
+          </Button>
           <Button size="sm" variant="danger" onClick={handleBulkDeleteLeads}>
             <Trash2 size={14} /> Delete selected
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => setSelectedLeadIds([])}>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedLeadIds([])}>
             Clear
           </Button>
         </div>
