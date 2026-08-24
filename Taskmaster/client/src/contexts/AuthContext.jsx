@@ -64,6 +64,17 @@ const IMMEDIATE_SESSION_PROBE_PATHS = new Set([]);
 const SESSION_RETRIES = 3;
 const ESTABLISH_COOKIE_VERIFY_TIMEOUT_MS = 3000;
 
+export function resolveEstablishedSessionUser(establishUser, cookieUser) {
+  if (
+    establishUser?._id
+    && cookieUser?._id
+    && String(cookieUser._id) === String(establishUser._id)
+  ) {
+    return cookieUser;
+  }
+  return establishUser;
+}
+
 /** One short cookie check after clerk-establish; trust establish body if probe lags. */
 async function verifyEstablishedSessionCookie(expectedUserId, isCancelled) {
   if (isCancelled()) return null;
@@ -422,20 +433,8 @@ export const AuthProvider = ({ children }) => {
 
     const isCancelled = () => epoch !== authEpochRef.current;
 
-    // Trust establish body; optional ≤3s cookie check (no multi-retry waterfall).
-    const cookieUser = await verifyEstablishedSessionCookie(
-      sessionUser._id,
-      isCancelled,
-    );
-    if (isCancelled()) return;
-
-    const verifiedUser = cookieUser || sessionUser;
-
-    const enriched = await enrichUserDepartment(verifiedUser).catch(() => verifiedUser);
-    if (isCancelled()) return;
-
     setUser((prev) => {
-      const merged = mergeSessionUser(prev, enriched || verifiedUser);
+      const merged = mergeSessionUser(prev, sessionUser);
       if (hasAnalyticsConsent()) {
         ensurePostHogForConsent();
         setPostHogUser(merged);
@@ -445,7 +444,28 @@ export const AuthProvider = ({ children }) => {
     recordAttendanceSessionLogin();
     setLoading(false);
     setSessionReady(true);
-    refetchPostLoginQueries(queryClient);
+
+    (async () => {
+      const cookieUser = await verifyEstablishedSessionCookie(
+        sessionUser._id,
+        isCancelled,
+      );
+      if (isCancelled()) return;
+
+      const verifiedUser = resolveEstablishedSessionUser(sessionUser, cookieUser);
+      const enriched = await enrichUserDepartment(verifiedUser).catch(() => verifiedUser);
+      if (isCancelled()) return;
+
+      setUser((prev) => {
+        const merged = mergeSessionUser(prev, enriched || verifiedUser);
+        if (!userSessionChanged(prev, merged)) return prev;
+        if (hasAnalyticsConsent()) {
+          ensurePostHogForConsent();
+          setPostHogUser(merged);
+        }
+        return merged;
+      });
+    })().catch(() => { });
   }, [queryClient]);
 
   const retryBoot = useCallback(() => {

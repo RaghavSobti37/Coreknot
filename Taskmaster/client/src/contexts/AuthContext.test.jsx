@@ -18,4 +18,11 @@ describe('userSessionChanged', () => {
 
     expect(userSessionChanged(prev, next)).toBe(true);
   });
+
+  it('keeps the established session payload when cookie verification has not returned yet', async () => {
+    const { resolveEstablishedSessionUser } = await import('./AuthContext.jsx');
+    const establishUser = { _id: 'u1', email: 'one@example.com' };
+
+    expect(resolveEstablishedSessionUser(establishUser, null)).toBe(establishUser);
+  });
 });
