@@ -102,12 +102,12 @@
     "artist-crm:bulk:prod": "node Taskmaster/server/scripts/bulkPushArtistCrmToProd.js --prod --fix-index"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.1",
-    "concurrently": "^10.0.3",
-    "dependency-cruiser": "^18.0.0",
+    "@playwright/test": "^1.62.1",
+    "concurrently": "^10.0.5",
+    "dependency-cruiser": "^18.2.0",
     "husky": "^9.1.7",
     "jsonfile": "^6.2.1",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   },
   "engines": {
     "node": ">=18"
