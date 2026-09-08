@@ -58,7 +58,12 @@ export default function OrgPickerPage() {
     return null;
   }
 
-  if (!isLoading && memberships.length <= 1) {
+  if (!isLoading && memberships.length === 0) {
+    navigate('/org/create', { replace: true });
+    return null;
+  }
+
+  if (!isLoading && memberships.length === 1) {
     navigate(orgPathFromUser(user, '/dashboard'), { replace: true });
     return null;
   }
@@ -85,6 +90,11 @@ export default function OrgPickerPage() {
             );
           })}
         </ul>
+        <div className="mt-6 border-t border-[var(--color-bg-border)] pt-4">
+          <Button className="w-full" variant="primary" onClick={() => navigate('/org/create')}>
+            Create a new organization
+          </Button>
+        </div>
       </div>
     </div>
   );

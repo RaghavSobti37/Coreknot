@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { getTenantId } = require('../utils/tenantContext');
 const { tenantIdFilter } = require('../utils/mongoId');
 
-module.exports = function tenantPlugin(schema, options) {
+module.exports = function tenantPlugin(schema, options = {}) {
   // Add tenantId to the schema if it doesn't exist
   if (!schema.path('tenantId')) {
     schema.add({
@@ -21,6 +21,13 @@ module.exports = function tenantPlugin(schema, options) {
       const tenantId = getTenantId();
       if (tenantId) {
         this.tenantId = tenantId;
+      } else if (
+        options.allowMissingTenant
+        && String(process.env.OPEN_MULTI_TENANT || 'true').trim().toLowerCase() !== 'false'
+        && process.env.NODE_ENV === 'production'
+      ) {
+        // Open multi-tenant prod: User may exist before org create
+        return;
       } else if (
         process.env.NODE_ENV !== 'production'
         && (

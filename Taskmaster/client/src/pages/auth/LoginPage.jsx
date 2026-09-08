@@ -11,7 +11,7 @@ import InstallGuideModal from '../../components/auth/InstallGuideModal';
 import { detectInstallPlatform } from '../../utils/installPlatform';
 import { isClerkConfigured } from '../../config/clerk';
 import { loginCopy } from '../../constants/marketingContent';
-import { resolveLoginReturnPath } from '../../utils/loginReturnPath';
+import { resolvePostAuthPath } from '../../utils/postAuthPath';
 import { subscribeClerkEstablishError } from '../../lib/clerkEstablishRegistry';
 import { computeLoginUiState, resolveClerkSignInPathname } from '../../lib/clerkSignInFlow';
 import { navigateOnce, resetNavigateGuard } from '../../lib/postLoginRedirect';
@@ -21,25 +21,6 @@ const linkClass =
 
 const forgotBtnClass =
   'text-sm text-[var(--brand-green)] font-medium hover:text-[var(--brand-teal-deep)] underline-offset-2 hover:underline transition-colors';
-
-/** Clerk hides Forgot password on the combined email+password start step. */
-function ForgotPasswordHint({ visible }) {
-  if (!visible) return null;
-  return (
-    <div
-      className="mb-4 rounded-lg border border-teal-400/30 bg-teal-950/30 px-4 py-3 text-sm text-teal-50 text-center"
-      role="status"
-    >
-      <p className="font-medium">Reset your password</p>
-      <p className="mt-1 text-teal-100/90">
-        Use the reset page to receive a code by email and choose a new password.
-      </p>
-      <Link to="/forgot-password" className={`${linkClass} mt-2 inline-flex`}>
-        Open reset page
-      </Link>
-    </div>
-  );
-}
 
 function RateLimitHint({ visible }) {
   if (!visible) return null;
@@ -97,7 +78,6 @@ function LoginPageView({
   const clerkReady = isClerkConfigured();
 
   const signInPath = resolveClerkSignInPathname(pathname || location.pathname);
-  const showForgotHint = new URLSearchParams(location.search).get('forgot') === '1';
 
   const uiState = computeLoginUiState({
     clerkReady,
@@ -125,12 +105,12 @@ function LoginPageView({
     }
     if (authLoading || navigatedRef.current) return;
     navigatedRef.current = true;
-    const target = resolveLoginReturnPath({
+    const target = resolvePostAuthPath(user, {
       stateFrom: location.state?.from,
       search: location.search,
     });
     navigateOnce(navigate, target);
-  }, [uiState, authLoading, navigate, location.state, location.search]);
+  }, [uiState, authLoading, navigate, location.state, location.search, user]);
 
   const asideLinks = (
     <>
@@ -138,9 +118,9 @@ function LoginPageView({
         {installPlatform.installed ? loginCopy.installCtaInstalled : 'Install app'}
       </button>
       <span className="text-[var(--brand-teal-mid)]/40" aria-hidden>·</span>
-      <span className="text-[var(--brand-teal-mid)]">Need access?</span>
+      <span className="text-[var(--brand-teal-mid)]">New here?</span>
       <Link to="/register" className={linkClass}>
-        Request invitation
+        Create organization
       </Link>
     </>
   );
@@ -185,7 +165,6 @@ function LoginPageView({
               </div>
             ) : null}
             <RateLimitHint visible={Boolean(new URLSearchParams(location.search).get('rate-limit'))} />
-            <ForgotPasswordHint visible={showForgotHint} />
             <ClerkSignInBlock />
             <p className="mt-3 text-center text-sm text-teal-100/80">
               <Link to="/forgot-password" className={forgotBtnClass}>

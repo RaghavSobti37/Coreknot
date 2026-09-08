@@ -132,19 +132,20 @@ export const landingFeaturePillars = [
 ];
 
 export const loginCopy = {
-  subtitle: 'Projects, CRM, attendance, and team ops in one workspace.',
+  subtitle: 'Projects, CRM, attendance, and team ops — your org only.',
   installCta: 'Install CoreKnot app',
   installCtaInstalled: 'App install guide',
 };
 
 export const registerCopy = {
-  title: 'Request access',
-  subtitle: 'CoreKnot is invite-only. Ask your organisation admin to add you, or send a request below.',
-  submitLabel: 'Request access',
-  signInPrompt: 'Already have credentials?',
+  title: 'Create your workspace',
+  subtitle: 'Sign up free, then create your organization. You only see your org’s data.',
+  submitLabel: 'Continue',
+  signInPrompt: 'Already have an account?',
   signInLink: 'Sign in',
   closedSystemNote: 'Your admin will create your account and share a temporary password. Self sign-up is disabled.',
-  successMessage: 'Request sent. Your organisation admin will add you and share login credentials.',
+  openSystemNote: 'After sign-up you will create your organization. Invites keep teammates inside your org boundary.',
+  successMessage: 'Account ready. Create your organization to continue.',
 };
 
 export const inAppFeatures = {

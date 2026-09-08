@@ -1,8 +1,6 @@
 const crypto = require('crypto');
 const { verifyToken, clerkClient } = require('@clerk/clerk-sdk-node');
 const User = require('../models/User');
-const { ensurePlatformTenant } = require('./defaultTenant');
-
 const MOCK_SECRET = 'mock_clerk_secret';
 
 const populateDepartment = (query) =>
@@ -88,7 +86,7 @@ const clerkTokenInstanceMismatchMessage = (token) => {
 
 /**
  * Find an existing CoreKnot user from a verified Clerk profile.
- * Closed system — does not auto-create accounts (admin provisions users).
+ * Open multi-tenant — creates accounts without a tenant until org create / Clerk org map.
  * @param {{ clerkUserId: string, email: string, name: string }} profile
  * @param {{ tenantId?: string }} guards
  */
@@ -112,22 +110,9 @@ const resolveUserFromClerkProfile = async (profile, guards = {}) => {
       err.status = 403;
       throw err;
     }
-    let tenantId = guards.tenantId || null;
-    if (!tenantId) {
-      const { resolveDefaultTenantId, ensurePlatformTenant } = require('./defaultTenant');
-      try {
-        tenantId = await resolveDefaultTenantId();
-      } catch (err) {
-        try {
-          tenantId = await ensurePlatformTenant();
-        } catch (bootstrapErr) {
-          console.error('[clerkAuth] platform tenant bootstrap failed during user creation:', bootstrapErr?.message || bootstrapErr);
-          const fail = new Error('Workspace tenant is not configured. Contact an administrator.');
-          fail.status = 503;
-          throw fail;
-        }
-      }
-    }
+    // Open multi-tenant: only attach tenant when Clerk org maps to one.
+    // Never dump new users into the platform/default tenant (cross-org leak).
+    const tenantId = guards.tenantId || null;
     const createPayload = {
       name: profile.name || email.split('@')[0],
       email,

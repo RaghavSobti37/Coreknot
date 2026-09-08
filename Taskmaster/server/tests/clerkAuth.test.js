@@ -102,17 +102,14 @@ describe('resolveUserFromClerkProfile', () => {
     jest.clearAllMocks();
   });
 
-  it('creates a user with default tenant in production when tenant context is missing', async () => {
+  it('creates a user without tenant when Clerk org is not mapped (open multi-tenant)', async () => {
     process.env.NODE_ENV = 'production';
-    const { resetDefaultTenantCache, resolveDefaultTenantId } = require('../utils/defaultTenant');
     const tenant = await Tenant.create({
       name: 'Clerk Auth Tenant',
       contactEmail: 'clerk-auth@test.com',
       status: 'active',
     });
     process.env.DEFAULT_TENANT_ID = String(tenant._id);
-    resetDefaultTenantCache();
-    expect(String(await resolveDefaultTenantId())).toBe(String(tenant._id));
 
     const profile = {
       clerkUserId: 'user_clerk_new',
@@ -122,30 +119,29 @@ describe('resolveUserFromClerkProfile', () => {
 
     const dbUser = await resolveUserFromClerkProfile(profile);
     expect(dbUser).toBeTruthy();
-    expect(String(dbUser.tenantId)).toBe(String(tenant._id));
+    expect(dbUser.tenantId).toBeFalsy();
     expect(dbUser.clerkId).toBe('user_clerk_new');
   });
 
-  it('creates a user via ensurePlatformTenant when no env tenant is configured', async () => {
+  it('attaches tenant only when guards.tenantId is provided', async () => {
     process.env.NODE_ENV = 'production';
     delete process.env.WEBHOOK_TENANT_ID;
     delete process.env.DEFAULT_TENANT_ID;
-    const { resetDefaultTenantCache } = require('../utils/defaultTenant');
-    resetDefaultTenantCache();
-    await Tenant.deleteMany({ name: 'Default Tenant' });
+    const tenant = await Tenant.create({
+      name: 'Clerk Auth Tenant',
+      contactEmail: 'clerk-auth@test.com',
+      status: 'active',
+    });
 
     const profile = {
-      clerkUserId: 'user_clerk_fallback',
+      clerkUserId: 'user_clerk_mapped',
       email: 'clerk-new@example.com',
-      name: 'Clerk Fallback',
+      name: 'Clerk Mapped',
     };
 
-    const dbUser = await resolveUserFromClerkProfile(profile);
+    const dbUser = await resolveUserFromClerkProfile(profile, { tenantId: tenant._id });
     expect(dbUser).toBeTruthy();
-    expect(dbUser.tenantId).toBeTruthy();
-    expect(dbUser.clerkId).toBe('user_clerk_fallback');
-    const defaultTenant = await Tenant.findOne({ name: 'Default Tenant' });
-    expect(defaultTenant).toBeTruthy();
-    expect(String(dbUser.tenantId)).toBe(String(defaultTenant._id));
+    expect(String(dbUser.tenantId)).toBe(String(tenant._id));
+    expect(dbUser.clerkId).toBe('user_clerk_mapped');
   });
 });

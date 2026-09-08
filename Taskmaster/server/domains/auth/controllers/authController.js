@@ -37,7 +37,10 @@ const {
 const { syncClerkUserPassword } = require('../../../utils/clerkUserProvisioning');
 const { escapeHtml, safeHref, textToHtml } = require('../../../utils/emailHtml');
 
-const { assertEstablishAllowed } = require('../utils/establishAccess');
+const {
+  assertEstablishAllowed,
+  isRegistrationAllowed: isOpenRegistrationAllowed,
+} = require('../utils/establishAccess');
 const { isClerkProductionAuth, respondClerkOnlyAuth } = require('../../../utils/clerkOnlyAuth');
 const asyncHandler = require('../../../middleware/asyncHandler');
 
@@ -156,6 +159,7 @@ const sendAuthSuccess = async (req, res, populated, { authMethod, clerkActiveTen
     if (activeTenantId) activeTenantId = String(activeTenantId);
   }
 
+  const needsOrgCreate = memberships.length === 0;
   const needsTenantSelection = orgFirst
     ? memberships.length > 0 && !activeTenantId
     : memberships.length > 1 && !activeTenantId;
@@ -185,22 +189,12 @@ const sendAuthSuccess = async (req, res, populated, { authMethod, clerkActiveTen
       : { _id: m.tenantId },
   }));
   payload.needsTenantSelection = needsTenantSelection;
+  payload.needsOrgCreate = needsOrgCreate;
   await attachActiveTenantFields(payload, activeTenantId);
   return res.json(payload);
 };
 
-const isRegistrationAllowed = (emailLower) => {
-  if (process.env.REGISTRATION_DISABLED === 'true' && process.env.NODE_ENV === 'production') {
-    return { ok: false, error: 'Registration is disabled. Contact an administrator.' };
-  }
-  if (process.env.NODE_ENV !== 'production') return { ok: true };
-
-  const domain = emailLower.split('@')[1] || '';
-  if (ALLOWED_DOMAIN && domain !== ALLOWED_DOMAIN && emailLower !== ADMIN_EMAIL) {
-    return { ok: false, error: 'Registration restricted to authorized email domain' };
-  }
-  return { ok: true };
-};
+const isRegistrationAllowed = (emailLower) => isOpenRegistrationAllowed(emailLower);
 
 const resolveSignupDepartment = async (departmentId) => {
   if (departmentId === null || departmentId === '' || departmentId === undefined) {
@@ -489,6 +483,7 @@ exports.getMe = async (req, res) => {
     payload.memberships = memberships.map(formatMembershipRow);
     await attachActiveTenantFields(payload, activeTenantId);
     const orgFirst = require('../../../utils/orgFirstAuth').isOrgFirstAuthEnabled();
+    payload.needsOrgCreate = memberships.length === 0;
     payload.needsTenantSelection = orgFirst
       ? memberships.length > 0 && !activeTenantId
       : memberships.length > 1 && !activeTenantId;

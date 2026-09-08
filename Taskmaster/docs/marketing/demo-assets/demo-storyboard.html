@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CoreKnot demo — open for orgs</title>
+  <style>
+    :root {
+      --bg: #0b1f1c;
+      --fg: #e8f5f1;
+      --accent: #2dd4bf;
+      --muted: #94b8ae;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; height: 100%;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: radial-gradient(1200px 600px at 20% 0%, #134e4a 0%, var(--bg) 55%);
+      color: var(--fg);
+      overflow: hidden;
+    }
+    .slide {
+      position: absolute; inset: 0;
+      display: none; flex-direction: column;
+      justify-content: center; padding: 6vw 8vw;
+    }
+    .slide.active { display: flex; }
+    .label {
+      align-self: flex-start;
+      font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); border: 1px solid rgba(45,212,191,0.45);
+      padding: 0.4rem 0.75rem; border-radius: 999px; margin-bottom: 1.5rem;
+    }
+    h1 { font-size: clamp(2rem, 5vw, 3.4rem); margin: 0 0 0.75rem; line-height: 1.15; max-width: 16ch; }
+    p { font-size: clamp(1.05rem, 2.2vw, 1.35rem); color: var(--muted); max-width: 42ch; margin: 0; line-height: 1.45; }
+    .brand { position: fixed; top: 1.5rem; left: 2rem; font-weight: 700; letter-spacing: 0.04em; }
+    .timecode { position: fixed; bottom: 1.5rem; right: 2rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body>
+  <div class="brand">CoreKnot</div>
+  <div class="timecode" id="tc">0:00</div>
+
+  <section class="slide active" data-sec="10"><div class="label">Open for every organization</div><h1>Your org. Your data. One ops workspace.</h1><p>Projects, CRM, attendance, and team ops — hard-scoped to the organization you belong to.</p></section>
+  <section class="slide" data-sec="12"><div class="label">Sign up free</div><h1>No invite wall.</h1><p>Create an account, then create your organization. Teammates join by invite inside your boundary.</p></section>
+  <section class="slide" data-sec="14"><div class="label">Create organization</div><h1>Name it. Claim your slug. Invite the team.</h1><p>Guided wizard at /org/create — identity, settings, optional invites in one flow.</p></section>
+  <section class="slide" data-sec="12"><div class="label">Tenant isolation</div><h1>API + database filters. No cross-org leaks.</h1><p>Every read and write rides your active tenant. Platform admin tools stay platform-only.</p></section>
+  <section class="slide" data-sec="12"><div class="label">Dashboard</div><h1>Land in a workspace that orients you.</h1><p>Onboarding checklist, mission overview, and clear next actions for a new org.</p></section>
+  <section class="slide" data-sec="12"><div class="label">Projects &amp; tasks</div><h1>Plan work without leaving the org boundary.</h1><p>Projects, tasks, and schedules stay private to your membership.</p></section>
+  <section class="slide" data-sec="12"><div class="label">CRM</div><h1>Leads and follow-ups for your pipeline only.</h1><p>CRM lists, exports, and assignments never spill into another organization’s data.</p></section>
+  <section class="slide" data-sec="10"><div class="label">Attendance</div><h1>Mark presence. See the team at a glance.</h1><p>Attendance and leave stay inside your tenant context.</p></section>
+  <section class="slide" data-sec="12"><div class="label">Finance</div><h1>Documents and approvals when unlocked.</h1><p>Uploads and approval trails are tenant-scoped — other orgs cannot see your files.</p></section>
+  <section class="slide" data-sec="10"><div class="label">Org switcher</div><h1>Multi-org members switch cleanly.</h1><p>Create another organization anytime. Active org drives every query.</p></section>
+  <section class="slide" data-sec="10"><div class="label">Invite teammates</div><h1>Grow the roster without opening the walls.</h1><p>Invites land in your org only — roles and seats under your control.</p></section>
+  <section class="slide" data-sec="12"><div class="label">Get started</div><h1>Open CoreKnot for your team.</h1><p>Sign up → create org → build. Your data stays yours.</p></section>
+
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    const tc = document.getElementById('tc');
+    const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s) % 60).padStart(2, '0')}`;
+    let i = 0;
+    let elapsed = 0;
+    const started = performance.now();
+    function advance() {
+      slides.forEach((el, idx) => el.classList.toggle('active', idx === i));
+      const hold = (Number(slides[i].dataset.sec) || 10) * 1000;
+      const until = performance.now() + hold;
+      const tick = () => {
+        const wall = (performance.now() - started) / 1000;
+        tc.textContent = fmt(wall);
+        if (performance.now() >= until) {
+          i += 1;
+          if (i >= slides.length) {
+            document.body.dataset.demoComplete = '1';
+            return;
+          }
+          advance();
+          return;
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+    advance();
+  </script>
+</body>
+</html>

@@ -260,4 +260,10 @@ describe('tenant isolation (required CI gate)', () => {
     const leads = await Lead.find({ tenantId: tenantB._id }).setOptions({ bypassTenant: true });
     expect(leads).toHaveLength(0);
   });
+
+  it('org admin cannot list all tenants via /api/admin/tenants', async () => {
+    const { agent } = await seedTenantUser({ stamp, tenantId: tenantA._id, emailSuffix: 'admin-leak' });
+    const res = await agent.get('/api/admin/tenants');
+    expect(res.statusCode).toBe(403);
+  });
 });

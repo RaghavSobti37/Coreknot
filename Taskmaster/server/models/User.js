@@ -72,7 +72,7 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   return candidatePassword === this.password;
 };
 
-userSchema.plugin(tenantPlugin);
+userSchema.plugin(tenantPlugin, { allowMissingTenant: true });
 userSchema.plugin(auditLogPlugin, { modelName: 'User' });
 
 module.exports = mongoose.model('User', userSchema);

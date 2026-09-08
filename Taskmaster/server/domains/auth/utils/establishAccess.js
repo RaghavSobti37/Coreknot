@@ -1,14 +1,17 @@
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
-const ALLOWED_DOMAIN = (process.env.ALLOWED_DOMAIN || '').trim().toLowerCase();
+/** Open for any org by default. Set OPEN_MULTI_TENANT=false to restore closed domain gate. */
+const isOpenMultiTenant = () =>
+  String(process.env.OPEN_MULTI_TENANT || 'true').trim().toLowerCase() !== 'false';
 
 const isRegistrationAllowed = (emailLower) => {
   if (process.env.REGISTRATION_DISABLED === 'true' && process.env.NODE_ENV === 'production') {
     return { ok: false, error: 'Registration is disabled. Contact an administrator.' };
   }
-  if (process.env.NODE_ENV !== 'production') return { ok: true };
+  if (isOpenMultiTenant()) return { ok: true };
 
+  const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  const allowedDomain = (process.env.ALLOWED_DOMAIN || '').trim().toLowerCase();
   const domain = emailLower.split('@')[1] || '';
-  if (ALLOWED_DOMAIN && domain !== ALLOWED_DOMAIN && emailLower !== ADMIN_EMAIL) {
+  if (allowedDomain && domain !== allowedDomain && emailLower !== adminEmail) {
     return { ok: false, error: 'Registration restricted to authorized email domain' };
   }
   return { ok: true };
@@ -34,6 +37,7 @@ const assertEstablishAllowed = (profile) => {
 };
 
 module.exports = {
+  isOpenMultiTenant,
   isRegistrationAllowed,
   assertEstablishAllowed,
 };
