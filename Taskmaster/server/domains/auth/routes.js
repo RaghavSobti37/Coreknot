@@ -8,7 +8,7 @@ const {
   register, login, logout, getMe, getSession, getAuthConfig, changeRequiredPassword, googleLogin,
   googleAuthRedirect, googleAuthCallback, oauthEstablishSession, clerkEstablishSession, forgotPassword, resetPassword,
   listSessions, revokeSession, revokeOtherSessions, getRealtimeToken, adminRevokeAllUserSessions,
-  mfaSetup, mfaConfirm, mfaDisable, requestAccess,
+  mfaSetup, mfaConfirm, mfaDisable, requestAccess, guestLogin,
 } = require('./controllers/authController');
 const {
   registerOptions, registerVerify, loginOptions,
@@ -99,6 +99,16 @@ const authAccessRequestLimiter = rateLimit({
   skip: () => process.env.NODE_ENV === 'test',
 });
 
+const guestLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many guest sessions. Try again in 15 minutes.' },
+  skip: () => process.env.NODE_ENV === 'test',
+  keyGenerator: (req) => `guest-login-ip:${ipKeyGenerator(req)}`,
+});
+
 const authForgotPasswordLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
@@ -116,6 +126,7 @@ const authForgotPasswordLimiter = rateLimit({
 });
 
 router.post('/access-request', authAccessRequestLimiter, validateBody(accessRequestBody), requestAccess);
+router.post('/guest', guestLoginLimiter, guestLogin);
 router.post('/register', authSignupLimiter, validateBody(registerBody), register);
 router.post('/login', authLoginLimiter, validateBody(loginBody), login);
 router.post('/forgot-password', authForgotPasswordLimiter, validateBody(forgotPasswordBody), forgotPassword);

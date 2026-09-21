@@ -1237,7 +1237,7 @@
     "routes": [
       "/login/*"
     ],
-    "lines": 210,
+    "lines": 189,
     "defaultExport": "function",
     "namedExports": [],
     "hooks": [
@@ -1310,7 +1310,7 @@
     "routes": [
       "/register/*"
     ],
-    "lines": 187,
+    "lines": 139,
     "defaultExport": "function",
     "namedExports": [],
     "hooks": [
@@ -1322,14 +1322,13 @@
       "useRef",
       "useState"
     ],
-    "apis": [
-      "/api/auth/access-request"
-    ],
+    "apis": [],
     "components": [
       "AppBootError",
       "AuthMarketingShell",
       "BootScreen",
-      "ClearSessionCookiesButton"
+      "ClearSessionCookiesButton",
+      "ClerkSignUpBlock"
     ]
   },
   {
@@ -1455,11 +1454,10 @@
     "routes": [
       "(tab: leads)"
     ],
-    "lines": 1416,
+    "lines": 1421,
     "defaultExport": "function",
     "namedExports": [],
     "hooks": [
-      "useArtistImportSheets",
       "useArtistReps",
       "useAuth",
       "useCRMConfig",
@@ -1483,6 +1481,7 @@
       "useUpdateLead"
     ],
     "apis": [
+      "/api/crm/export?${params.toString()}",
       "/api/crm/leads/${highlightId}",
       "/api/crm/leads/${id}",
       "/api/crm/leads/${leadId}/audit",
@@ -2151,7 +2150,7 @@
     "routes": [
       "/org/pick"
     ],
-    "lines": 92,
+    "lines": 102,
     "defaultExport": "function",
     "namedExports": [],
     "hooks": [

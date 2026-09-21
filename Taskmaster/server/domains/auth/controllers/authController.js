@@ -190,6 +190,9 @@ const sendAuthSuccess = async (req, res, populated, { authMethod, clerkActiveTen
   }));
   payload.needsTenantSelection = needsTenantSelection;
   payload.needsOrgCreate = needsOrgCreate;
+  if (authMethod === 'guest') {
+    payload.isGuest = true;
+  }
   await attachActiveTenantFields(payload, activeTenantId);
   return res.json(payload);
 };
@@ -498,14 +501,31 @@ exports.getMe = async (req, res) => {
 exports.getAuthConfig = (req, res) => {
   const pk = String(process.env.CLERK_PUBLISHABLE_KEY || '').trim();
   const publishableKeyPrefix = pk.length >= 12 ? pk.slice(0, 12) : pk || null;
+  const guestDisabled = String(process.env.GUEST_LOGIN_DISABLED || '').trim().toLowerCase() === 'true';
   return res.json({
     clerkConfigured: isClerkConfigured(),
     publishableKeyPrefix,
     orgFirstAuth: require('../../../utils/orgFirstAuth').isOrgFirstAuthEnabled(),
+    guestLoginEnabled: !guestDisabled,
     apiGitSha: String(process.env.RENDER_GIT_COMMIT || process.env.GIT_COMMIT || '').slice(0, 7) || 'unknown',
     cookieDomain: process.env.COOKIE_DOMAIN || '.tsccoreknot.com',
   });
 };
+
+/** Shared sandbox session — no Clerk. Creates demo projects/tasks on first use. */
+exports.guestLogin = asyncHandler(async (req, res) => {
+  if (String(process.env.GUEST_LOGIN_DISABLED || '').trim().toLowerCase() === 'true') {
+    return apiError(res, 'Guest login is disabled', 403);
+  }
+
+  const { ensureGuestSandbox } = require('../../../services/guestSandboxService');
+  const { user, tenantId } = await ensureGuestSandbox();
+
+  return sendAuthSuccess(req, res, user, {
+    authMethod: 'guest',
+    clerkActiveTenantId: tenantId,
+  });
+});
 
 /** Silent session bootstrap — 200 with authenticated:false when logged out (no 401 noise in DevTools). */
 exports.getSession = async (req, res) => {

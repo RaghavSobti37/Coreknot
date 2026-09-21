@@ -35,6 +35,7 @@ const defaultAuthContext = {
   sessionReady: false,
   bootError: null,
   login: async () => { },
+  loginAsGuest: async () => { },
   confirmSessionFromEstablish: async () => { },
   logout: () => { },
   refreshUser: () => { },
@@ -447,6 +448,7 @@ export const AuthProvider = ({ children }) => {
 
     (async () => {
       const cookieUser = await verifyEstablishedSessionCookie(
+
         sessionUser._id,
         isCancelled,
       );
@@ -468,6 +470,19 @@ export const AuthProvider = ({ children }) => {
     })().catch(() => { });
   }, [queryClient]);
 
+  const loginAsGuest = useCallback(async () => {
+    const { data } = await axios.post('/api/auth/guest', {}, { withCredentials: true });
+    if (!data?._id) {
+      throw new Error(data?.error || 'Guest session could not be established.');
+    }
+    if (data.activeTenantId) {
+      setActiveTenantIdInSession(data.activeTenantId);
+    }
+    await confirmSessionFromEstablish(data);
+    capturePostHogEvent('guest_login', { source: 'client' });
+    return data;
+  }, [confirmSessionFromEstablish]);
+
   const retryBoot = useCallback(() => {
     loggingOutRef.current = false;
     setBootError(null);
@@ -481,12 +496,13 @@ export const AuthProvider = ({ children }) => {
     sessionReady,
     bootError,
     login,
+    loginAsGuest,
     confirmSessionFromEstablish,
     logout,
     refreshUser: fetchUser,
     applySessionUser,
     retryBoot,
-  }), [user, loading, sessionReady, bootError, login, confirmSessionFromEstablish, logout, fetchUser, applySessionUser, retryBoot]);
+  }), [user, loading, sessionReady, bootError, login, loginAsGuest, confirmSessionFromEstablish, logout, fetchUser, applySessionUser, retryBoot]);
 
   return (
     <AuthContext.Provider value={value}>

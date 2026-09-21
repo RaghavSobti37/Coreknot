@@ -15,6 +15,8 @@ import { resolvePostAuthPath } from '../../utils/postAuthPath';
 import { subscribeClerkEstablishError } from '../../lib/clerkEstablishRegistry';
 import { computeLoginUiState, resolveClerkSignInPathname } from '../../lib/clerkSignInFlow';
 import { navigateOnce, resetNavigateGuard } from '../../lib/postLoginRedirect';
+import { orgPathFromUser } from '../../lib/orgPaths';
+import { appUrl, needsExternalAppNavigation } from '../../config/siteUrls';
 
 const linkClass =
   'text-[var(--brand-green)] font-medium hover:text-[var(--brand-teal-deep)] underline-offset-2 hover:underline transition-colors';
@@ -68,12 +70,14 @@ function LoginPageView({
   clerkSessionId = null,
   pathname = '/login',
 }) {
-  const { user, loading: authLoading, sessionReady, bootError, retryBoot } = useAuth();
+  const { user, loading: authLoading, sessionReady, bootError, retryBoot, loginAsGuest } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const navigatedRef = useRef(false);
   const [installGuideOpen, setInstallGuideOpen] = React.useState(false);
   const [establishError, setEstablishError] = useState(null);
+  const [guestBusy, setGuestBusy] = useState(false);
+  const [guestError, setGuestError] = useState('');
   const installPlatform = React.useMemo(() => detectInstallPlatform(), [installGuideOpen]);
   const clerkReady = isClerkConfigured();
 
@@ -140,13 +144,44 @@ function LoginPageView({
 
   const showRecovery = uiState !== 'SHOW_SIGN_IN';
 
+  const handleContinueAsGuest = async () => {
+    if (guestBusy) return;
+    setGuestError('');
+    setGuestBusy(true);
+    try {
+      const sessionUser = await loginAsGuest();
+      const dest = resolvePostAuthPath(sessionUser) || orgPathFromUser(sessionUser, '/dashboard');
+      if (needsExternalAppNavigation()) {
+        window.location.assign(appUrl(dest));
+        return;
+      }
+      navigate(dest, { replace: true });
+    } catch (err) {
+      setGuestError(err?.response?.data?.error || err?.message || 'Could not start guest session.');
+      setGuestBusy(false);
+    }
+  };
+
   return (
     <>
       <AuthMarketingShell title="CoreKnot" subtitle={loginCopy.subtitle} asideLinks={asideLinks}>
         {!clerkReady ? (
-          <p className="text-sm text-red-200 text-center">
-            Clerk is not configured. Set <code className="text-xs">VITE_CLERK_PUBLISHABLE_KEY</code> in client env.
-          </p>
+          <div className="space-y-4">
+            <p className="text-sm text-red-200 text-center">
+              Clerk is not configured. Set <code className="text-xs">VITE_CLERK_PUBLISHABLE_KEY</code> in client env.
+            </p>
+            <button
+              type="button"
+              onClick={handleContinueAsGuest}
+              disabled={guestBusy}
+              className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-semibold text-teal-50 hover:bg-white/10 transition disabled:opacity-60"
+            >
+              {guestBusy ? 'Opening sandbox…' : 'Continue as Guest'}
+            </button>
+            {guestError ? (
+              <p className="text-xs text-red-200 text-center" role="alert">{guestError}</p>
+            ) : null}
+          </div>
         ) : (
           <>
             {uiState === 'ESTABLISH_ERROR' && establishError ? (
@@ -166,6 +201,19 @@ function LoginPageView({
             ) : null}
             <RateLimitHint visible={Boolean(new URLSearchParams(location.search).get('rate-limit'))} />
             <ClerkSignInBlock />
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={handleContinueAsGuest}
+                disabled={guestBusy}
+                className="w-full max-w-sm rounded-lg border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-semibold text-teal-50 hover:bg-white/10 transition disabled:opacity-60"
+              >
+                {guestBusy ? 'Opening sandbox…' : 'Continue as Guest'}
+              </button>
+              {guestError ? (
+                <p className="text-xs text-red-200 text-center" role="alert">{guestError}</p>
+              ) : null}
+            </div>
             <p className="mt-3 text-center text-sm text-teal-100/80">
               <Link to="/forgot-password" className={forgotBtnClass}>
                 Forgot password?

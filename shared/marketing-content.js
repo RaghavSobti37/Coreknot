@@ -52,7 +52,8 @@ export const landingHero = {
     { label: 'Built for growing teams', icon: 'Users' },
   ],
   ctaPrimary: 'Get Started Free',
-  ctaSecondary: 'Book a Demo',
+  ctaSecondary: 'Continue as Guest',
+  ctaTertiary: 'Book a Demo',
 };
 
 export const landingSections = {
@@ -99,7 +100,8 @@ export const landingSections = {
     title: 'Ready to simplify your workflow?',
     description: 'Start your free account today. No credit card required.',
     ctaPrimary: 'Get Started Free',
-    ctaSecondary: 'Book a Demo',
+    ctaSecondary: 'Continue as Guest',
+    ctaTertiary: 'Book a Demo',
   },
 };
 

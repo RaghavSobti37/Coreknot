@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-12",
+  "generatedAt": "2026-09-08",
   "hooks": {
     "useAcceptArtistMembership": {
       "files": [
@@ -316,56 +316,6 @@
       ],
       "endpoints": [],
       "network": false
-    },
-    "useArtistImportSheets": {
-      "files": [
-        {
-          "file": "Taskmaster/client/src/hooks/queries/crm.js",
-          "endpoints": [
-            "/api/crm/artist/import-sheets",
-            "/api/crm/config",
-            "/api/crm/imports",
-            "/api/crm/leads",
-            "/api/crm/leads/${id}",
-            "/api/crm/leads/${leadId}",
-            "/api/crm/leads/audit-logs",
-            "/api/crm/rep-summary",
-            "/api/crm/stats",
-            "/api/users/artist-reps",
-            "/api/users/sales-reps"
-          ],
-          "network": true
-        },
-        {
-          "file": "Taskmaster/client/src/pages/crm/LeadsPage.jsx",
-          "endpoints": [
-            "/api/crm/leads/${highlightId}",
-            "/api/crm/leads/${id}",
-            "/api/crm/leads/${leadId}/audit",
-            "/api/crm/leads/${selectedLead._id}",
-            "/api/crm/leads/${selectedLead._id}/notes"
-          ],
-          "network": true
-        }
-      ],
-      "endpoints": [
-        "/api/crm/artist/import-sheets",
-        "/api/crm/config",
-        "/api/crm/imports",
-        "/api/crm/leads",
-        "/api/crm/leads/${highlightId}",
-        "/api/crm/leads/${id}",
-        "/api/crm/leads/${leadId}",
-        "/api/crm/leads/${leadId}/audit",
-        "/api/crm/leads/${selectedLead._id}",
-        "/api/crm/leads/${selectedLead._id}/notes",
-        "/api/crm/leads/audit-logs",
-        "/api/crm/rep-summary",
-        "/api/crm/stats",
-        "/api/users/artist-reps",
-        "/api/users/sales-reps"
-      ],
-      "network": true
     },
     "useArtistMembership": {
       "files": [
@@ -1113,6 +1063,7 @@
         {
           "file": "Taskmaster/client/src/pages/crm/LeadsPage.jsx",
           "endpoints": [
+            "/api/crm/export?${params.toString()}",
             "/api/crm/leads/${highlightId}",
             "/api/crm/leads/${id}",
             "/api/crm/leads/${leadId}/audit",
@@ -1125,6 +1076,7 @@
       "endpoints": [
         "/api/crm/artist/import-sheets",
         "/api/crm/config",
+        "/api/crm/export?${params.toString()}",
         "/api/crm/imports",
         "/api/crm/leads",
         "/api/crm/leads/${highlightId}",
@@ -1492,13 +1444,6 @@
           "network": true
         },
         {
-          "file": "Taskmaster/client/src/pages/auth/RegisterPage.jsx",
-          "endpoints": [
-            "/api/auth/access-request"
-          ],
-          "network": true
-        },
-        {
           "file": "Taskmaster/client/src/pages/calendar/CalendarView.jsx",
           "endpoints": [
             "/api/calendar/seed-music-content"
@@ -1517,6 +1462,7 @@
         {
           "file": "Taskmaster/client/src/pages/crm/LeadsPage.jsx",
           "endpoints": [
+            "/api/crm/export?${params.toString()}",
             "/api/crm/leads/${highlightId}",
             "/api/crm/leads/${id}",
             "/api/crm/leads/${leadId}/audit",
@@ -1642,7 +1588,6 @@
         "/api/artists/${artistId}/members/accept",
         "/api/artists/${artistId}/members/invite",
         "/api/artists/${artistId}/membership/me",
-        "/api/auth/access-request",
         "/api/auth/change-required-password",
         "/api/auth/clerk-establish",
         "/api/auth/google?state=link_${user?._id}",
@@ -1653,6 +1598,7 @@
         "/api/calendar",
         "/api/calendar/${id}",
         "/api/calendar/seed-music-content",
+        "/api/crm/export?${params.toString()}",
         "/api/crm/leads/${highlightId}",
         "/api/crm/leads/${id}",
         "/api/crm/leads/${leadId}/audit",
@@ -1743,6 +1689,7 @@
         {
           "file": "Taskmaster/client/src/pages/crm/LeadsPage.jsx",
           "endpoints": [
+            "/api/crm/export?${params.toString()}",
             "/api/crm/leads/${highlightId}",
             "/api/crm/leads/${id}",
             "/api/crm/leads/${leadId}/audit",
@@ -1755,6 +1702,7 @@
       "endpoints": [
         "/api/crm/artist/import-sheets",
         "/api/crm/config",
+        "/api/crm/export?${params.toString()}",
         "/api/crm/imports",
         "/api/crm/leads",
         "/api/crm/leads/${highlightId}",
@@ -1794,6 +1742,7 @@
         {
           "file": "Taskmaster/client/src/pages/crm/LeadsPage.jsx",
           "endpoints": [
+            "/api/crm/export?${params.toString()}",
             "/api/crm/leads/${highlightId}",
             "/api/crm/leads/${id}",
             "/api/crm/leads/${leadId}/audit",
@@ -1806,6 +1755,7 @@
       "endpoints": [
         "/api/crm/artist/import-sheets",
         "/api/crm/config",
+        "/api/crm/export?${params.toString()}",
         "/api/crm/imports",
         "/api/crm/leads",
         "/api/crm/leads/${highlightId}",
@@ -1911,17 +1861,9 @@
             "/api/tenants/select"
           ],
           "network": true
-        },
-        {
-          "file": "Taskmaster/client/src/pages/auth/RegisterPage.jsx",
-          "endpoints": [
-            "/api/auth/access-request"
-          ],
-          "network": true
         }
       ],
       "endpoints": [
-        "/api/auth/access-request",
         "/api/auth/clerk-establish",
         "/api/tenants/memberships",
         "/api/tenants/select"
@@ -1999,6 +1941,7 @@
         {
           "file": "Taskmaster/client/src/pages/crm/LeadsPage.jsx",
           "endpoints": [
+            "/api/crm/export?${params.toString()}",
             "/api/crm/leads/${highlightId}",
             "/api/crm/leads/${id}",
             "/api/crm/leads/${leadId}/audit",
@@ -2067,6 +2010,7 @@
         "/api/contacts",
         "/api/contacts/${editingContact._id}",
         "/api/contacts/${id}",
+        "/api/crm/export?${params.toString()}",
         "/api/crm/leads/${highlightId}",
         "/api/crm/leads/${id}",
         "/api/crm/leads/${leadId}/audit",
@@ -2712,6 +2656,7 @@
         {
           "file": "Taskmaster/client/src/pages/crm/LeadsPage.jsx",
           "endpoints": [
+            "/api/crm/export?${params.toString()}",
             "/api/crm/leads/${highlightId}",
             "/api/crm/leads/${id}",
             "/api/crm/leads/${leadId}/audit",
@@ -2724,6 +2669,7 @@
       "endpoints": [
         "/api/crm/artist/import-sheets",
         "/api/crm/config",
+        "/api/crm/export?${params.toString()}",
         "/api/crm/imports",
         "/api/crm/leads",
         "/api/crm/leads/${highlightId}",
@@ -3011,6 +2957,7 @@
         {
           "file": "Taskmaster/client/src/pages/crm/LeadsPage.jsx",
           "endpoints": [
+            "/api/crm/export?${params.toString()}",
             "/api/crm/leads/${highlightId}",
             "/api/crm/leads/${id}",
             "/api/crm/leads/${leadId}/audit",
@@ -3028,6 +2975,7 @@
         }
       ],
       "endpoints": [
+        "/api/crm/export?${params.toString()}",
         "/api/crm/leads/${highlightId}",
         "/api/crm/leads/${id}",
         "/api/crm/leads/${leadId}/audit",
@@ -3125,6 +3073,7 @@
         {
           "file": "Taskmaster/client/src/pages/crm/LeadsPage.jsx",
           "endpoints": [
+            "/api/crm/export?${params.toString()}",
             "/api/crm/leads/${highlightId}",
             "/api/crm/leads/${id}",
             "/api/crm/leads/${leadId}/audit",
@@ -3209,6 +3158,7 @@
         "/api/contacts",
         "/api/contacts/${editingContact._id}",
         "/api/contacts/${id}",
+        "/api/crm/export?${params.toString()}",
         "/api/crm/leads/${highlightId}",
         "/api/crm/leads/${id}",
         "/api/crm/leads/${leadId}/audit",
@@ -3909,6 +3859,7 @@
         {
           "file": "Taskmaster/client/src/pages/crm/LeadsPage.jsx",
           "endpoints": [
+            "/api/crm/export?${params.toString()}",
             "/api/crm/leads/${highlightId}",
             "/api/crm/leads/${id}",
             "/api/crm/leads/${leadId}/audit",
@@ -3921,6 +3872,7 @@
       "endpoints": [
         "/api/crm/artist/import-sheets",
         "/api/crm/config",
+        "/api/crm/export?${params.toString()}",
         "/api/crm/imports",
         "/api/crm/leads",
         "/api/crm/leads/${highlightId}",
@@ -4005,6 +3957,7 @@
         {
           "file": "Taskmaster/client/src/pages/crm/LeadsPage.jsx",
           "endpoints": [
+            "/api/crm/export?${params.toString()}",
             "/api/crm/leads/${highlightId}",
             "/api/crm/leads/${id}",
             "/api/crm/leads/${leadId}/audit",
@@ -4017,6 +3970,7 @@
       "endpoints": [
         "/api/crm/artist/import-sheets",
         "/api/crm/config",
+        "/api/crm/export?${params.toString()}",
         "/api/crm/imports",
         "/api/crm/leads",
         "/api/crm/leads/${highlightId}",
@@ -5078,6 +5032,7 @@
         {
           "file": "Taskmaster/client/src/pages/crm/LeadsPage.jsx",
           "endpoints": [
+            "/api/crm/export?${params.toString()}",
             "/api/crm/leads/${highlightId}",
             "/api/crm/leads/${id}",
             "/api/crm/leads/${leadId}/audit",
@@ -5090,6 +5045,7 @@
       "endpoints": [
         "/api/crm/artist/import-sheets",
         "/api/crm/config",
+        "/api/crm/export?${params.toString()}",
         "/api/crm/imports",
         "/api/crm/leads",
         "/api/crm/leads/${highlightId}",
@@ -5168,6 +5124,7 @@
         {
           "file": "Taskmaster/client/src/pages/crm/LeadsPage.jsx",
           "endpoints": [
+            "/api/crm/export?${params.toString()}",
             "/api/crm/leads/${highlightId}",
             "/api/crm/leads/${id}",
             "/api/crm/leads/${leadId}/audit",
@@ -5206,6 +5163,7 @@
       "endpoints": [
         "/api/auth/google?state=link_${user?._id}",
         "/api/auth/reset-password",
+        "/api/crm/export?${params.toString()}",
         "/api/crm/leads/${highlightId}",
         "/api/crm/leads/${id}",
         "/api/crm/leads/${leadId}/audit",
@@ -5628,6 +5586,7 @@
         {
           "file": "Taskmaster/client/src/pages/crm/LeadsPage.jsx",
           "endpoints": [
+            "/api/crm/export?${params.toString()}",
             "/api/crm/leads/${highlightId}",
             "/api/crm/leads/${id}",
             "/api/crm/leads/${leadId}/audit",
@@ -5664,6 +5623,7 @@
         "/api/crm/artist/assignees",
         "/api/crm/artist/preview",
         "/api/crm/artist/upload",
+        "/api/crm/export?${params.toString()}",
         "/api/crm/leads",
         "/api/crm/leads/${highlightId}",
         "/api/crm/leads/${id}",
@@ -5842,6 +5802,7 @@
         {
           "file": "Taskmaster/client/src/pages/crm/LeadsPage.jsx",
           "endpoints": [
+            "/api/crm/export?${params.toString()}",
             "/api/crm/leads/${highlightId}",
             "/api/crm/leads/${id}",
             "/api/crm/leads/${leadId}/audit",
@@ -5951,6 +5912,7 @@
         "/api/contacts",
         "/api/contacts/${editingContact._id}",
         "/api/contacts/${id}",
+        "/api/crm/export?${params.toString()}",
         "/api/crm/leads/${highlightId}",
         "/api/crm/leads/${id}",
         "/api/crm/leads/${leadId}/audit",
@@ -6311,6 +6273,7 @@
         {
           "file": "Taskmaster/client/src/pages/crm/LeadsPage.jsx",
           "endpoints": [
+            "/api/crm/export?${params.toString()}",
             "/api/crm/leads/${highlightId}",
             "/api/crm/leads/${id}",
             "/api/crm/leads/${leadId}/audit",
@@ -6323,6 +6286,7 @@
       "endpoints": [
         "/api/crm/artist/import-sheets",
         "/api/crm/config",
+        "/api/crm/export?${params.toString()}",
         "/api/crm/imports",
         "/api/crm/leads",
         "/api/crm/leads/${highlightId}",

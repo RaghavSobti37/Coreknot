@@ -8,6 +8,7 @@ vi.mock('./displayMode', () => ({
 vi.mock('../config/siteMode', () => ({
   isAppSite: vi.fn(() => false),
   isAuthSite: vi.fn(() => false),
+  isLandingSite: vi.fn(() => false),
 }));
 
 vi.mock('../config/siteUrls', () => ({
@@ -15,7 +16,7 @@ vi.mock('../config/siteUrls', () => ({
 }));
 
 import { isVercelPreviewHost, shouldUseSameOriginApi } from './displayMode';
-import { isAppSite } from '../config/siteMode';
+import { isAppSite, isAuthSite, isLandingSite } from '../config/siteMode';
 import { usesExternalAuthHost } from '../config/siteUrls';
 import { apiPath, getAxiosBaseURL, getRealtimeOrigin, isCrossOriginRealtime } from './apiBase';
 
@@ -24,6 +25,8 @@ describe('apiBase hybrid routing', () => {
     vi.mocked(shouldUseSameOriginApi).mockReturnValue(false);
     vi.mocked(isVercelPreviewHost).mockReturnValue(false);
     vi.mocked(isAppSite).mockReturnValue(false);
+    vi.mocked(isAuthSite).mockReturnValue(false);
+    vi.mocked(isLandingSite).mockReturnValue(false);
     vi.mocked(usesExternalAuthHost).mockReturnValue(false);
   });
 
@@ -117,5 +120,17 @@ describe('apiBase hybrid routing', () => {
     vi.stubGlobal('window', { location: { origin: 'https://app.example.com' } });
     expect(getRealtimeOrigin()).toBe('https://api.example.com');
     expect(isCrossOriginRealtime()).toBe(true);
+  });
+
+  it('routes landing host through same-origin /api for guest cookies', () => {
+    vi.stubEnv('DEV', false);
+    vi.stubEnv('PROD', true);
+    vi.stubEnv('VITE_API_URL', 'https://api.example.com');
+    vi.stubGlobal('window', {
+      location: { origin: 'https://landing.tsccoreknot.com', hostname: 'landing.tsccoreknot.com' },
+    });
+    vi.mocked(isLandingSite).mockReturnValue(true);
+    expect(getAxiosBaseURL()).toBeUndefined();
+    expect(apiPath('/api/auth/guest')).toBe('/api/auth/guest');
   });
 });

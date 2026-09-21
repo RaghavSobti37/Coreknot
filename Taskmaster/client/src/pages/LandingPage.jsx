@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import {
   Briefcase,
@@ -19,6 +19,7 @@ import BrandLogo from '../components/brand/BrandLogo';
 import LandingDashboardPreview from '../components/landing/LandingDashboardPreview';
 import { authUrl, appUrl, hasSameOriginAuthRoutes } from '../config/siteUrls';
 import { isClerkConfigured } from '../config/clerk';
+import { orgPathFromUser } from '../lib/orgPaths';
 import {
   brand,
   footer,
@@ -93,7 +94,9 @@ export default function LandingPage() {
 }
 
 function LandingPageView({ clerkLoaded, clerkSignedIn }) {
-  const { user, loading } = useAuth();
+  const { user, loading, loginAsGuest } = useAuth();
+  const [guestBusy, setGuestBusy] = useState(false);
+  const [guestError, setGuestError] = useState('');
 
   const clerkSessionPending = isClerkConfigured()
     && clerkLoaded
@@ -105,14 +108,37 @@ function LandingPageView({ clerkLoaded, clerkSignedIn }) {
   }
 
   if (user) {
+    const dest = orgPathFromUser(user, '/dashboard');
     if (hasSameOriginAuthRoutes()) {
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to={dest} replace />;
     }
-    window.location.replace(appUrl('/dashboard'));
+    window.location.replace(appUrl(dest));
     return null;
   }
 
   const demoHref = `mailto:${brand.supportEmail}?subject=CoreKnot%20Demo%20Request`;
+
+  const handleContinueAsGuest = async () => {
+    if (guestBusy) return;
+    setGuestError('');
+    setGuestBusy(true);
+    try {
+      const sessionUser = await loginAsGuest();
+      const dest = orgPathFromUser(sessionUser, '/dashboard');
+      if (hasSameOriginAuthRoutes()) {
+        window.location.assign(dest);
+        return;
+      }
+      window.location.assign(appUrl(dest));
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.message || 'Could not start guest session.';
+      setGuestError(msg);
+      setGuestBusy(false);
+    }
+  };
+
+  const guestButtonClass =
+    'px-5 py-3 rounded-xl border border-[var(--landing-beige)] bg-white hover:bg-[var(--landing-beige)]/60 text-[var(--landing-green-dark)] font-bold text-sm transition disabled:opacity-60 disabled:cursor-not-allowed';
 
   return (
     <div className="tm-marketing-page tm-landing min-h-screen bg-[var(--landing-beige-wash)] text-[var(--landing-green-dark)] flex flex-col font-sans">
@@ -203,11 +229,19 @@ function LandingPageView({ clerkLoaded, clerkSignedIn }) {
                 >
                   {landingHero.ctaPrimary}
                 </AuthLink>
+                <button
+                  type="button"
+                  onClick={handleContinueAsGuest}
+                  disabled={guestBusy}
+                  className={guestButtonClass}
+                >
+                  {guestBusy ? 'Opening sandbox…' : landingHero.ctaSecondary}
+                </button>
                 <a
                   href={demoHref}
                   className="px-5 py-3 rounded-xl border border-[var(--landing-beige)] bg-white hover:bg-[var(--landing-beige)]/60 text-[var(--landing-green-dark)] font-bold text-sm transition"
                 >
-                  {landingHero.ctaSecondary}
+                  {landingHero.ctaTertiary}
                 </a>
                 <a
                   href={landingHero.desktopDownloadUrl}
@@ -219,6 +253,10 @@ function LandingPageView({ clerkLoaded, clerkSignedIn }) {
                   {landingHero.desktopDownloadCta}
                 </a>
               </div>
+
+              {guestError ? (
+                <p className="text-sm text-red-700" role="alert">{guestError}</p>
+              ) : null}
 
               <section
                 id="desktop-download"
@@ -429,11 +467,19 @@ function LandingPageView({ clerkLoaded, clerkSignedIn }) {
               >
                 {landingSections.finalCta.ctaPrimary}
               </AuthLink>
+              <button
+                type="button"
+                onClick={handleContinueAsGuest}
+                disabled={guestBusy}
+                className="px-6 py-3 rounded-xl border border-white/30 text-white hover:bg-white/10 font-bold text-sm transition disabled:opacity-60"
+              >
+                {guestBusy ? 'Opening sandbox…' : landingSections.finalCta.ctaSecondary}
+              </button>
               <a
                 href={demoHref}
                 className="px-6 py-3 rounded-xl border border-white/30 text-white hover:bg-white/10 font-bold text-sm transition"
               >
-                {landingSections.finalCta.ctaSecondary}
+                {landingSections.finalCta.ctaTertiary}
               </a>
             </div>
           </div>
